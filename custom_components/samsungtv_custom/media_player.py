@@ -26,6 +26,7 @@ from homeassistant.components.media_player.const import (
     SUPPORT_TURN_ON,
     SUPPORT_VOLUME_MUTE,
     SUPPORT_VOLUME_STEP,
+    SUPPORT_VOLUME_SET,
 )
 from homeassistant.const import (
     CONF_HOST,
@@ -55,6 +56,7 @@ SUPPORT_SAMSUNGTV = (
     SUPPORT_PAUSE
     | SUPPORT_VOLUME_STEP
     | SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_SET
     | SUPPORT_PREVIOUS_TRACK
     | SUPPORT_SELECT_SOURCE
     | SUPPORT_NEXT_TRACK
@@ -131,8 +133,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._name = name
         self._mac = mac
         self._uuid = uuid
-        # Assume that the TV is not muted
+        # Assume that the TV is not muted and volume is 0
         self._muted = False
+        self._volume = 0
         # Assume that the TV is in Play mode
         self._playing = True
         self._state = None
@@ -214,7 +217,14 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def is_volume_muted(self):
         """Boolean if volume is currently muted."""
+        self._muted = self._remote.get_mute()
         return self._muted
+
+    @property
+    def volume_level(self):
+        """Volume level of the media player (0..1)."""
+        self._volume = int(self._remote.get_volume()) / 100
+        return str(self._volume)
 
     @property
     def source_list(self):
@@ -251,6 +261,10 @@ class SamsungTVDevice(MediaPlayerDevice):
     def mute_volume(self, mute):
         """Send mute command."""
         self.send_key("KEY_MUTE")
+        
+    def set_volume_level(self, volume):
+        """Set volume level, range 0..1."""
+        self._remote.set_volume(int(volume*100))
 
     def media_play_pause(self):
         """Simulate play pause media player."""
