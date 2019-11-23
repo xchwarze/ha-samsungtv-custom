@@ -77,6 +77,8 @@ Edit it by adding the following lines:
     This contains the KEYS visible sources in the dropdown list in media player UI.<br/>
     Default value: '{"TV": "KEY_TV", "HDMI": "KEY_HDMI"}'<br/>
     Example value: '{"PlayStation": "KEY_HDMI1", "RaspberryPi": "KEY_HDMI2", "Chromecast": "KEY_HDMI3"}'<br/>
+    You can also chain KEYS, example: '{"TV": "KEY_SOURCES+KEY_ENTER"}'<br/>
+    And even add delays (in milliseconds) between sending KEYS, example: '{"TV": "KEY_SOURCES+500+KEY_ENTER"}'<br/>
     
     **app_list:**<br/>
     (json)(Optional)<br/>
