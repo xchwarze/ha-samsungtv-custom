@@ -9,6 +9,7 @@ import os
 import wakeonlan
 import websocket
 import requests
+import time
 
 from samsungtvws import SamsungTVWS
 
@@ -39,8 +40,6 @@ from homeassistant.const import (
 )
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import dt as dt_util
-
-import time
 
 _LOGGER = logging.getLogger(__name__)
 
