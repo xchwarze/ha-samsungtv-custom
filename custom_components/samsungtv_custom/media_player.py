@@ -9,7 +9,6 @@ import os
 import wakeonlan
 import websocket
 import requests
-import time
 
 from samsungtvws import SamsungTVWS
 
@@ -40,6 +39,8 @@ from homeassistant.const import (
 )
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import dt as dt_util
+
+import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -326,7 +327,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                 return
 
             wakeonlan.send_magic_packet(self._mac)
-            time.sleep(2)
+            #time.sleep(2)
             self._ping_device()
         else:
             self.send_command("KEY_POWERON")
@@ -421,7 +422,16 @@ class SamsungTVDevice(MediaPlayerDevice):
     async def async_select_source(self, source):
         """Select input source."""
         if source in self._source_list:
-            await self.hass.async_add_job(self.send_command, self._source_list[ source ])
+            source_key = self._source_list[ source ]
+            if "+" in source_key:
+                all_source_keys = source_key.split("+")
+                for this_key in all_source_keys:
+                    if this_key.isdigit():
+                        time.sleep(int(this_key)/1000)
+                    else:
+                        await self.hass.async_add_job(self.send_command, this_key)
+            else:
+                await self.hass.async_add_job(self.send_command, self._source_list[ source ])
         elif source in self._app_list:
             await self.hass.async_add_job(self.send_command, self._app_list[ source ], "run_app")
         else:
