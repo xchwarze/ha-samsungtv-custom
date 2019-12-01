@@ -12,6 +12,9 @@ This is a custom component to allow control of SamsungTV devices in [HomeAssista
 # Additional Features:
 
 * Ability to send keys using a native Home Assistant service
+* Ability to send chained key commands using a native Home Assistant service
+* Supports Assistant commands (Google Home, should work with Alexa too, but untested)
+* Extended volume control
 * Ability to customize source list at media player dropdown list
 * Migrate SamsungCtl to SamsungTvWs 
 
@@ -80,6 +83,7 @@ Edit it by adding the following lines:
     You can also chain KEYS, example: '{"TV": "KEY_SOURCES+KEY_ENTER"}'<br/>
     And even add delays (in milliseconds) between sending KEYS, example:<br/>
     '{"TV": "KEY_SOURCES+500+KEY_ENTER"}'<br/>
+    Warning: changing input source with voice commands only works if you set the device name in `source_list` as one of the whitelisted words that can be seen on [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes#mode-settings) (under "Mode Settings")<br/>
     
     **app_list:**<br/>
     (json)(Optional)<br/>
@@ -91,6 +95,15 @@ Edit it by adding the following lines:
 3. Congrats! You're all set!
 
 # Usage
+
+### Known Supported Voice Commands
+
+* Change input source to DEVICE-NAME-HERE on SAMSUNG-TV-NAME-HERE
+* Volume up on SAMSUNG-TV-NAME-HERE (increases volume by 1)
+* Volume down on SAMSUNG-TV-NAME-HERE (decreases volume by 1)
+* Set volume to 50 on SAMSUNG-TV-NAME-HERE (sets volume to 50 out of 100)
+* Turn off SAMSUNG-TV-NAME-HERE
+* Turn on SAMSUNG-TV-NAME-HERE (only works if the TV is connected by LAN cable to the Network)
 
 ### Send Keys
 ```
