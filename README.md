@@ -1,7 +1,7 @@
-[![](https://img.shields.io/github/release/xchwarze/ha-samsungtv-custom/all.svg?style=for-the-badge)](https://github.com/xchwarze/ha-samsungtv-custom/releases)
+[![](https://img.shields.io/github/release/jaruba/ha-samsungtv-custom/all.svg?style=for-the-badge)](https://github.com/jaruba/ha-samsungtv-custom/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-[![](https://img.shields.io/github/license/xchwarze/ha-samsungtv-custom?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/badge/MAINTAINER-%40xchwarze-red?style=for-the-badge)](https://github.com/xchwarze)
+[![](https://img.shields.io/github/license/jaruba/ha-samsungtv-custom?style=for-the-badge)](LICENSE)
+[![](https://img.shields.io/badge/MAINTAINER-%40jaruba-red?style=for-the-badge)](https://github.com/jaruba)
 [![](https://img.shields.io/badge/COMMUNITY-FORUM-success?style=for-the-badge)](https://community.home-assistant.io)
 
 # HomeAssistant - SamsungTV Custom Component
