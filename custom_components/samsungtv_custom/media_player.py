@@ -11,7 +11,7 @@ import websocket
 import requests
 import time
 
-from samsungtvws import SamsungTVWS
+from .samsungtvws.remote import SamsungTVWS
 
 from homeassistant import util
 from homeassistant.components.media_player import (
@@ -31,6 +31,7 @@ from homeassistant.components.media_player.const import (
     SUPPORT_TURN_ON,
     SUPPORT_VOLUME_MUTE,
     SUPPORT_VOLUME_STEP,
+    SUPPORT_VOLUME_SET,
     MEDIA_TYPE_APP,
 )
 from homeassistant.const import (
@@ -68,6 +69,7 @@ SUPPORT_SAMSUNGTV = (
     SUPPORT_PAUSE
     | SUPPORT_VOLUME_STEP
     | SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_SET
     | SUPPORT_PREVIOUS_TRACK
     | SUPPORT_SELECT_SOURCE
     | SUPPORT_NEXT_TRACK
@@ -159,6 +161,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._is_ws_connection = True if port in (8001, 8002) else False
         # Assume that the TV is not muted and volume is 0
         self._muted = False
+        self._volume = 0
         # Assume that the TV is in Play mode
         self._playing = True
         self._state = None
@@ -300,6 +303,7 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def is_volume_muted(self):
         """Boolean if volume is currently muted."""
+        self._muted = self._remote.get_mute()
         return self._muted
 
     @property
@@ -313,6 +317,12 @@ class SamsungTVDevice(MediaPlayerDevice):
         source_list.extend(list(self._app_list))
 
         return source_list
+
+    @property
+    def volume_level(self):
+        """Volume level of the media player (0..1)."""
+        self._volume = int(self._remote.get_volume()) / 100
+        return self._volume
 
     @property
     def supported_features(self):
@@ -367,6 +377,10 @@ class SamsungTVDevice(MediaPlayerDevice):
     def mute_volume(self, mute):
         """Send mute command."""
         self.send_command("KEY_MUTE")
+
+    def set_volume_level(self, volume):
+        """Set volume level, range 0..1."""
+        self._remote.set_volume(int(volume*100))
 
     def media_play_pause(self):
         """Simulate play pause media player."""
