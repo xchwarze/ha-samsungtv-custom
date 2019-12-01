@@ -83,7 +83,7 @@ Edit it by adding the following lines:
     You can also chain KEYS, example: '{"TV": "KEY_SOURCES+KEY_ENTER"}'<br/>
     And even add delays (in milliseconds) between sending KEYS, example:<br/>
     '{"TV": "KEY_SOURCES+500+KEY_ENTER"}'<br/>
-    Warning: changing input source with voice commands only works if you set the device name in `source_list` as one of the whitelisted words that can be seen on [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes#mode-settings) (under "Mode Settings")<br/>
+    **Warning: changing input source with voice commands only works if you set the device name in `source_list` as one of the whitelisted words that can be seen on [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes#mode-settings) (under "Mode Settings")**<br/>
     
     **app_list:**<br/>
     (json)(Optional)<br/>
