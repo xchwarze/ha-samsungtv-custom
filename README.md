@@ -103,6 +103,7 @@ Edit it by adding the following lines:
 * Volume up on `SAMSUNG-TV-NAME-HERE` (increases volume by 1)
 * Volume down on `SAMSUNG-TV-NAME-HERE` (decreases volume by 1)
 * Set volume to 50 on `SAMSUNG-TV-NAME-HERE` (sets volume to 50 out of 100)
+* Mute `SAMSUNG-TV-NAME-HERE` (sets volume to 0)
 * Change input source to `DEVICE-NAME-HERE` on `SAMSUNG-TV-NAME-HERE` (only works if `DEVICE-NAME-HERE` is a whitelisted word from [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes) under "Mode Settings")
 
 (if you find more supported voice commands, please create an issue so I can add them here)
