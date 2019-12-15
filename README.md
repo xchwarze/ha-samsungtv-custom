@@ -98,7 +98,7 @@ Edit it by adding the following lines:
 
 ### Known Supported Voice Commands
 
-* Turn on `SAMSUNG-TV-NAME-HERE` (only works if the TV is connected by LAN cable to the Network)
+* Turn on `SAMSUNG-TV-NAME-HERE` (for some older TVs this only works if the TV is connected by LAN cable to the Network)
 * Turn off `SAMSUNG-TV-NAME-HERE`
 * Volume up on `SAMSUNG-TV-NAME-HERE` (increases volume by 1)
 * Volume down on `SAMSUNG-TV-NAME-HERE` (decreases volume by 1)
