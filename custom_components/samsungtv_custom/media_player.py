@@ -295,7 +295,11 @@ class SamsungTVDevice(MediaPlayerDevice):
     def name(self):
         """Return the name of the device."""
         return self._name
-
+    @property
+    def media_title(self):
+        """Title of current playing media."""
+        self._media_title = self._source
+        return self._media_title
     @property
     def state(self):
         """Return the state of the device."""
