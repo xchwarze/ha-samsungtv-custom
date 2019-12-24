@@ -181,7 +181,8 @@ class SamsungTVDevice(MediaPlayerDevice):
             port=port,
             timeout=self._timeout,
             key_press_delay=KEY_PRESS_TIMEOUT,
-            token_file=self._token_file
+            token_file=self._token_file,
+            app_list=self._app_list
         )
 
     def _gen_token_file(self):
