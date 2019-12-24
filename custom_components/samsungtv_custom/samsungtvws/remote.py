@@ -33,8 +33,9 @@ class SamsungTVWS:
     _URL_FORMAT = 'ws://{host}:{port}/api/v2/channels/samsung.remote.control?name={name}'
     _SSL_URL_FORMAT = 'wss://{host}:{port}/api/v2/channels/samsung.remote.control?name={name}&token={token}'
 
-    def __init__(self, host, token=None, token_file=None, port=8001, timeout=None, key_press_delay=1, name='SamsungTvRemote'):
+    def __init__(self, host, token=None, token_file=None, port=8001, timeout=None, key_press_delay=1, name='SamsungTvRemote', app_list=None):
         self.host = host
+        self.app_list = app_list
         self.token = token
         self.token_file = token_file
         self.port = port
@@ -214,15 +215,18 @@ class SamsungTVWS:
         return self.volume
 
     def get_running_app(self):
-        apps = ["Netflix", "Plex", "YouTube"]
-        for app in apps:
-          r = requests.get('http://{host}:8080/ws/app/{app}'.format(host=self.host, app=app))
-          data = r.text
-          root = ET.fromstring(data.encode('UTF-8'))
-          appName = root[0].text
-          appState = root[2].text
-          if appState == "running":
-            return app
+        if self.app_list is not None:
+            for app in self.app_list:
+              r = requests.get('http://{host}:8080/ws/app/{app}'.format(host=self.host, app=app))
+              if r is not None:
+                  data = r.text
+                  if data is not None:
+                      root = ET.fromstring(data.encode('UTF-8'))
+                      appName = root[0].text
+                      appState = root[2].text
+                      if appState == "running":
+                        return app
+        return None
 
     def set_volume(self, volume):
         self.SOAPrequest('SetVolume', "<Channel>Master</Channel><DesiredVolume>{}</DesiredVolume>".format(volume), 'RenderingControl')
