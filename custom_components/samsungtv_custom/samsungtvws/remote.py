@@ -215,9 +215,18 @@ class SamsungTVWS:
         return self.volume
 
     def get_running_app(self):
+
         if self.app_list is not None:
+
             for app in self.app_list:
-              r = requests.get('http://{host}:8080/ws/app/{app}'.format(host=self.host, app=app))
+
+              r = None
+
+              try:
+                r = requests.get('http://{host}:8080/ws/app/{app}'.format(host=self.host, app=app), timeout=5)
+              except requests.exceptions.RequestException as e:
+                pass
+
               if r is not None:
                   data = r.text
                   if data is not None:
@@ -226,6 +235,7 @@ class SamsungTVWS:
                       appState = root[2].text
                       if appState == "running":
                         return app
+
         return None
 
     def set_volume(self, volume):
