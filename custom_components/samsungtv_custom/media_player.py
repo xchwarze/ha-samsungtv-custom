@@ -13,6 +13,8 @@ import time
 
 from samsungtvws import SamsungTVWS
 
+import xml.etree.ElementTree as ET
+
 from homeassistant import util
 from homeassistant.components.media_player import MediaPlayerDevice, PLATFORM_SCHEMA
 from homeassistant.components.media_player.const import (
@@ -136,6 +138,56 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
 
 
+class MySamsungTVWS(SamsungTVWS):
+    """Extends samsungtvws."""
+    def __init__(self, host, token=None, token_file=None, port=8001, timeout=None, key_press_delay=1, name='SamsungTvRemote'):
+        self.host = host
+        self.token = token
+        self.token_file = token_file
+        self.port = port
+        self.timeout = None if timeout == 0 else timeout
+        self.key_press_delay = key_press_delay
+        self.name = name
+        self.connection = None
+        self.mute = False
+
+
+    def SoapRequest(self, action, arguments, protocole):
+        headers = {'SOAPAction': '"urn:schemas-upnp-org:service:{protocole}:1#{action}"'.format(action=action,
+                                                                                                protocole=protocole),
+                   'content-type': 'text/xml'}
+        body = """<?xml version="1.0" encoding="utf-8"?>
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+                    <s:Body>
+                    <u:{action} xmlns:u="urn:schemas-upnp-org:service:{protocole}:1">
+                        <InstanceID>0</InstanceID>
+                        {arguments}
+                    </u:{action}>
+                    </s:Body>
+                </s:Envelope>""".format(action=action, arguments=arguments, protocole=protocole)
+        response = None
+        try:
+            response = requests.post(
+                "http://{host}:9197/upnp/control/{protocole}1".format(host=self.host, protocole=protocole),
+                data=body, headers=headers, timeout=0.1)
+            response = response.content
+        except:
+            pass
+        return response
+
+    def _get_mute(self):
+        response = self.SoapRequest('GetMute', "<Channel>Master</Channel>", 'RenderingControl')
+        if response is not None:
+            tree = ET.fromstring(response.decode('utf8'))
+            for elem in tree.iter(tag='CurrentMute'):
+                mute = elem.text
+            if (int(mute) == 0):
+                self.mute = False
+            else:
+                self.mute = True
+        return self.mute
+
+
 class SamsungTVDevice(MediaPlayerDevice):
     """Representation of a Samsung TV."""
 
@@ -167,7 +219,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         if port == 8002:
             self._gen_token_file()
 
-        self._remote = SamsungTVWS(
+        self._remote = MySamsungTVWS(
             name=name,
             host=host,
             port=port,
@@ -296,6 +348,7 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def is_volume_muted(self):
         """Boolean if volume is currently muted."""
+        self._muted = self._remote._get_mute()
         return self._muted
 
     @property
