@@ -155,6 +155,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._mac = mac
         self._update_method = update_method
         self._update_custom_ping_url = update_custom_ping_url
+        self._source = None
         self._source_list = json.loads(source_list)
         self._app_list = json.loads(app_list) if app_list is not None else None
         self._uuid = uuid
@@ -294,7 +295,11 @@ class SamsungTVDevice(MediaPlayerDevice):
     def name(self):
         """Return the name of the device."""
         return self._name
-
+    @property
+    def media_title(self):
+        """Title of current playing media."""
+        self._media_title = self._source
+        return self._media_title
     @property
     def state(self):
         """Return the state of the device."""
@@ -323,7 +328,13 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Volume level of the media player (0..1)."""
         self._volume = int(self._remote.get_volume()) / 100
         return self._volume
-
+    
+    @property
+    def source(self):
+        """Return the current input source."""
+        self._source = self._remote.get_running_app()
+        return self._source
+    
     @property
     def supported_features(self):
         """Flag media player features that are supported."""

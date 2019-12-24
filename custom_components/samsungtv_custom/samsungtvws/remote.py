@@ -213,6 +213,16 @@ class SamsungTVWS:
                 self.volume = elem.text
         return self.volume
 
+    def get_running_app(self):
+        apps = ["Netflix", "Plex", "YouTube"]
+        for app in apps:
+          r = requests.get('http://{host}:8080/ws/app/{app}'.format(host=self.host, app=app))
+          data = r.text
+          root = ET.fromstring(data.encode('UTF-8'))
+          appName = root[0].text
+          appState = root[2].text
+          if appState == "running":
+            return app
 
     def set_volume(self, volume):
         self.SOAPrequest('SetVolume', "<Channel>Master</Channel><DesiredVolume>{}</DesiredVolume>".format(volume), 'RenderingControl')
