@@ -35,7 +35,7 @@ class SamsungTVWS:
 
     def __init__(self, host, token=None, token_file=None, port=8001, timeout=None, key_press_delay=1, name='SamsungTvRemote', app_list=None):
         self.host = host
-        self.app_list = app_list
+        self._app_list = app_list
         self.token = token
         self.token_file = token_file
         self.port = port
@@ -216,9 +216,9 @@ class SamsungTVWS:
 
     def get_running_app(self):
 
-        if self.app_list is not None:
+        if self._app_list is not None:
 
-            for app in self.app_list:
+            for app in self._app_list:
 
               r = None
 
