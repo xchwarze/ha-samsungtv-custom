@@ -234,7 +234,7 @@ class SamsungTVWS:
                       if root['visible']:
                         return app
 
-        return None
+        return 'TV/HDMI'
 
     def set_volume(self, volume):
         self.SOAPrequest('SetVolume', "<Channel>Master</Channel><DesiredVolume>{}</DesiredVolume>".format(volume), 'RenderingControl')
