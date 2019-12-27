@@ -223,17 +223,15 @@ class SamsungTVWS:
               r = None
 
               try:
-                r = requests.get('http://{host}:8080/ws/app/{app}'.format(host=self.host, app=app), timeout=2)
+                r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self.host, value=self._app_list[app]), timeout=2)
               except requests.exceptions.RequestException as e:
                 pass
 
               if r is not None:
                   data = r.text
                   if data is not None:
-                      root = ET.fromstring(data.encode('UTF-8'))
-                      appName = root[0].text
-                      appState = root[2].text
-                      if appState == "running":
+                      root = json.loads(data.encode('UTF-8'))
+                      if root['visible']:
                         return app
 
         return None
