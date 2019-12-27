@@ -231,7 +231,7 @@ class SamsungTVWS:
                   data = r.text
                   if data is not None:
                       root = json.loads(data.encode('UTF-8'))
-                      if root['visible']:
+                      if hasattr(root, 'visible') and root['visible']:
                         return app
 
         return 'TV/HDMI'
