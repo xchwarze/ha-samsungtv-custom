@@ -223,7 +223,7 @@ class SamsungTVWS:
               r = None
 
               try:
-                r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self.host, value=self._app_list[app]), timeout=2)
+                r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self.host, value=self._app_list[app]), timeout=0.5)
               except requests.exceptions.RequestException as e:
                 pass
 
