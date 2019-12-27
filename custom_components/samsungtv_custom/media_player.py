@@ -333,7 +333,10 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def source(self):
         """Return the current input source."""
-        self._source = self._remote.get_running_app()
+        if self._state != STATE_OFF:
+            self._source = self._remote.get_running_app()
+        else:
+            self._source = None
         return self._source
     
     @property
@@ -467,6 +470,7 @@ class SamsungTVDevice(MediaPlayerDevice):
             else:
                 await self.hass.async_add_job(self.send_command, self._source_list[ source ])
         elif source in self._app_list:
-            await self.hass.async_add_job(self.send_command, self._app_list[ source ], "run_app")
+            source_key = self._app_list[ source ]
+            await self.hass.async_add_job(self.send_command, source_key, "run_app")
         else:
             _LOGGER.error("Unsupported source")
