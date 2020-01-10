@@ -245,6 +245,7 @@ class SamsungTVWS:
         if response is not None:
             # mute_xml = response.decode('utf8')
             tree = ET.fromstring(response.decode('utf8'))
+            mute = 0
             for elem in tree.iter(tag='CurrentMute'):
                 mute = elem.text
             if (int(mute) == 0):
