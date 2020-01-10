@@ -342,10 +342,7 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        if self._mac:
-            return SUPPORT_SAMSUNGTV | SUPPORT_TURN_ON
-
-        return SUPPORT_SAMSUNGTV
+        return SUPPORT_SAMSUNGTV | SUPPORT_TURN_ON
 
     @property
     def device_class(self):
