@@ -33,6 +33,7 @@ from homeassistant.components.media_player.const import (
     SUPPORT_VOLUME_STEP,
     SUPPORT_VOLUME_SET,
     MEDIA_TYPE_APP,
+    MEDIA_TYPE_URL,
 )
 from homeassistant.const import (
     CONF_HOST,
@@ -448,6 +449,22 @@ class SamsungTVDevice(MediaPlayerDevice):
                 return
 
             await self.hass.async_add_job(self.send_command, media_id)
+
+        # Play media
+        elif media_type == MEDIA_TYPE_URL:
+            try:
+                cv.url(media_id)
+            except vol.Invalid:
+                _LOGGER.error('Media ID must be an url (ex: "http://"')
+                return
+
+            self._remote.set_current_media(media_id)
+            self._playing = True
+
+        # Trying to make stream component work on TV
+        elif media_type == "application/vnd.apple.mpegurl":
+            self._remote.set_current_media(media_id)
+            self._playing = True
 
         else:
             _LOGGER.error("Unsupported media type")
