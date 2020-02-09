@@ -17,6 +17,7 @@ This is a custom component to allow control of SamsungTV devices in [HomeAssista
 * Extended volume control
 * Ability to customize source list at media player dropdown list
 * Migrate SamsungCtl to SamsungTvWs 
+* Cast video URLs to Samsung TV
 
 ![N|Solid](https://i.imgur.com/8mCGZoO.png)
 ![N|Solid](https://i.imgur.com/t3e4bJB.png)
@@ -107,6 +108,19 @@ Edit it by adding the following lines:
 * Change input source to `DEVICE-NAME-HERE` on `SAMSUNG-TV-NAME-HERE` (only works if `DEVICE-NAME-HERE` is a whitelisted word from [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes) under "Mode Settings")
 
 (if you find more supported voice commands, please create an issue so I can add them here)
+
+### Cast to TV
+
+`service: media_player.play_media`
+
+```
+{
+  "entity_id": "media_player.samsungtv",
+  "media_content_type": "url",
+  "media_content_id": "FILE_URL",
+}
+```
+_Replace FILE_URL with the url of your file._
 
 ### Send Keys
 ```
