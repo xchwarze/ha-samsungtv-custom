@@ -220,20 +220,20 @@ class SamsungTVWS:
 
             for app in self._app_list:
 
-              r = None
+                r = None
 
-              try:
-                r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self.host, value=self._app_list[app]), timeout=0.5)
-              except requests.exceptions.RequestException as e:
-                pass
+                try:
+                    r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self.host, value=self._app_list[app]), timeout=0.5)
+                except requests.exceptions.RequestException as e:
+                    pass
 
-              if r is not None:
-                  data = r.text
-                  if data is not None:
-                      root = json.loads(data.encode('UTF-8'))
-                      if 'visible' in root:
-                        if root['visible']:
-                            return app
+                if r is not None:
+                    data = r.text
+                    if data is not None:
+                        root = json.loads(data.encode('UTF-8'))
+                        if 'visible' in root:
+                            if root['visible']:
+                                return app
 
         return 'TV/HDMI'
 
@@ -253,3 +253,18 @@ class SamsungTVWS:
             else:
                 self.mute = True
         return self.mute
+
+    def set_current_media(self, url):
+        """ Set media to playback and play it."""
+        try:
+            self.SOAPrequest('SetAVTransportURI', "<CurrentURI>{url}</CurrentURI><CurrentURIMetaData></CurrentURIMetaData>".format(url=url), 'AVTransport')
+            self.SOAPrequest('Play', "<Speed>1</Speed>", 'AVTransport')
+        except Exception:
+            pass
+
+    def play(self):
+        """ Play media that was already set as current."""
+        try:
+            self.SOAPrequest('Play', "<Speed>1</Speed>", 'AVTransport')
+        except Exception:
+            pass
