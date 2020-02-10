@@ -3,7 +3,7 @@
   "name": "Samsungtv Custom",
   "documentation": "https://github.com/jaruba/ha-samsungtv-custom",
   "requirements": [
-    "websocket-client==0.57.0",
+    "websocket-client==0.56.0",
     "wakeonlan==1.1.6"
   ],
   "dependencies": [],
