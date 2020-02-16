@@ -35,14 +35,14 @@ TODO
 Install it as you would do with any homeassistant custom component:
 
 1. Download `custom_components` folder.
-2. Copy the `samsungtv_custom` direcotry within the `custom_components` directory of your homeassistant installation. The `custom_components` directory resides within your homeassistant configuration directory.
+2. Copy the `samsungtv_tizen` direcotry within the `custom_components` directory of your homeassistant installation. The `custom_components` directory resides within your homeassistant configuration directory.
 **Note**: if the custom_components directory does not exist, you need to create it.
 After a correct installation, your configuration directory should look like the following.
     ```
     └── ...
     └── configuration.yaml
     └── custom_components
-        └── samsungtv_custom
+        └── samsungtv_tizen
             └── __init__.py
             └── media_player.py
             └── remote.py
@@ -59,7 +59,7 @@ Edit it by adding the following lines:
     ```
     # Example configuration.yaml entry
     media_player:
-      - platform: samsungtv_custom
+      - platform: samsungtv_tizen
         host: IP_ADDRESS
         port: 8002
         mac: MAC_ADDRESS
