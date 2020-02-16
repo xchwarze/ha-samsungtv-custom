@@ -1,7 +1,7 @@
 {
-  "domain": "samsungtv_custom",
-  "name": "Samsungtv Custom",
-  "documentation": "https://github.com/jaruba/ha-samsungtv-custom",
+  "domain": "samsungtv_tizen",
+  "name": "SamsungTV Tizen",
+  "documentation": "https://github.com/jaruba/ha-samsungtv-tizen",
   "requirements": [
     "websocket-client==0.56.0",
     "wakeonlan==1.1.6"

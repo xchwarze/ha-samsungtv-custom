@@ -13,6 +13,8 @@ import time
 
 from .remote import SamsungTVWS
 
+from .smartthings import smartthingstv as smartthings
+
 from homeassistant import util
 from homeassistant.components.media_player import (
     MediaPlayerDevice,
@@ -41,6 +43,8 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PORT,
     CONF_TIMEOUT,
+    CONF_API_KEY,
+    CONF_DEVICE_ID,
     STATE_OFF,
     STATE_ON,
 )
@@ -89,7 +93,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_UPDATE_METHOD, default=DEFAULT_UPDATE_METHOD): cv.string,
         vol.Optional(CONF_UPDATE_CUSTOM_PING_URL): cv.string,
         vol.Optional(CONF_SOURCE_LIST, default=DEFAULT_SOURCE_LIST): cv.string,
-        vol.Optional(CONF_APP_LIST): cv.string
+        vol.Optional(CONF_APP_LIST): cv.string,
+        vol.Optional(CONF_DEVICE_ID): cv.string,
+        vol.Optional(CONF_API_KEY): cv.string
     }
 )
 
@@ -113,6 +119,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         update_custom_ping_url = config.get(CONF_UPDATE_CUSTOM_PING_URL)
         source_list = config.get(CONF_SOURCE_LIST)
         app_list = config.get(CONF_APP_LIST)
+        api_key = config.get(CONF_API_KEY)
+        device_id = config.get(CONF_DEVICE_ID)
     elif discovery_info is not None:
         tv_name = discovery_info.get("name")
         model = discovery_info.get("model_name")
@@ -137,7 +145,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -146,12 +154,14 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerDevice):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
         self._host = host
         self._name = name
+        self._api_key = api_key
+        self._device_id = device_id
         self._timeout = timeout
         self._mac = mac
         self._update_method = update_method
@@ -246,6 +256,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Update state of device."""
         self._ping_device()
 
+        if self._api_key and self._device_id:
+            smartthings.device_update(self)
+
     def send_command(self, payload, command_type = "send_key", retry_count = 1):
         """Send a key to the tv and handles exceptions."""
         if self._power_off_in_progress() and payload not in ("KEY_POWER", "KEY_POWEROFF"):
@@ -300,12 +313,49 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def media_title(self):
         """Title of current playing media."""
-        self._media_title = self._source
-        return self._media_title
+        if hasattr(self, '_cloud_state'):
+            if self._cloud_state == "off":
+                return STATE_OFF
+            elif self._cloud_source in ["digitalTv", "TV"]:
+                if self._cloud_channel_name != "" and self._cloud_channel == '':
+                    return self._cloud_channel_name
+                elif self._cloud_channel_name == "":
+                    return self._cloud_channel
+                else:
+                    return self._cloud_channel_name + " (" + self._cloud_channel + ")"
+            else:
+                if self._source == "TV/HDMI":
+                    cloud_key = ""
+
+                    if self._cloud_source in ["digitalTv", "TV"]:
+                        cloud_key = "ST_TV"
+                    else:
+                        cloud_key = "ST_" + self._cloud_source
+
+                    found_source = ""
+
+                    for attr, value in self._source_list.items():
+                        if value == cloud_key:
+                            found_source = attr
+                    
+                    if found_source != "":
+                        return found_source
+                    else:
+                        return self._cloud_source
+                else:
+                    return self._source
+        else:
+            return self._source
     @property
     def state(self):
         """Return the state of the device."""
-        return self._state
+        if hasattr(self, '_cloud_state'):
+            if self._cloud_state == 'off':
+                return STATE_OFF
+            else:
+                return STATE_ON
+        else:
+            return self._state
 
     @property
     def is_volume_muted(self):
@@ -334,7 +384,32 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def source(self):
         """Return the current input source."""
-        if self._state != STATE_OFF:
+        if hasattr(self, '_cloud_state'):
+            if self._cloud_state == "off":
+                self._source = None
+            else:
+                running_app = self._remote.get_running_app()
+                if running_app == "TV/HDMI":
+
+                    cloud_key = ""
+                    if self._cloud_source in ["digitalTv", "TV"]:
+                        cloud_key = "ST_TV"
+                    else:
+                        cloud_key = "ST_" + self._cloud_source
+
+                    found_source = ""
+
+                    for attr, value in self._source_list.items():
+                        if value == cloud_key:
+                            found_source = attr
+                    
+                    if found_source != "":
+                        self._source = found_source
+                    else:
+                        self._source = None
+                else:
+                    self._source = running_app
+        elif self._state != STATE_OFF:
             self._source = self._remote.get_running_app()
         else:
             self._source = None
@@ -368,7 +443,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         # In my tests if _end_of_power_off < 15 WS ping method randomly fail!!!
         self._end_of_power_off = dt_util.utcnow() + timedelta(seconds=15)
 
-        if self._is_ws_connection:
+        if self._api_key and self._device_id:
+           smartthings.send_command(self, "", "switch")
+        elif self._is_ws_connection:
             self.send_command("KEY_POWER")
         else:
             self.send_command("KEY_POWEROFF")
@@ -474,7 +551,12 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Select input source."""
         if source in self._source_list:
             source_key = self._source_list[ source ]
-            if "+" in source_key:
+            if source_key.startswith("ST_"):
+                if source_key.startswith("ST_HDMI"):
+                    smartthings.send_command(self, source_key.replace("ST_", ""), "selectsource")
+                elif source_key == "ST_TV":
+                    smartthings.send_command(self, "digitalTv", "selectsource")
+            elif "+" in source_key:
                 all_source_keys = source_key.split("+")
                 for this_key in all_source_keys:
                     if this_key.isdigit():

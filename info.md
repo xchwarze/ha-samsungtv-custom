@@ -1,20 +1,55 @@
-[![](https://img.shields.io/github/release/roberodin/ha-samsungtv-custom/all.svg?style=for-the-badge)](https://github.com/roberodin/ha-samsungtv-custom/releases)
+[![](https://img.shields.io/github/release/jaruba/ha-samsungtv-tizen/all.svg?style=for-the-badge)](https://github.com/jaruba/ha-samsungtv-tizen/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-[![](https://img.shields.io/github/license/roberodin/ha-samsungtv-custom?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/badge/MAINTAINER-%40roberodin-red?style=for-the-badge)](https://github.com/roberodin)
+[![](https://img.shields.io/github/license/jaruba/ha-samsungtv-tizen?style=for-the-badge)](LICENSE)
+[![](https://img.shields.io/badge/MAINTAINER-%40jaruba-red?style=for-the-badge)](https://github.com/jaruba)
 [![](https://img.shields.io/badge/COMMUNITY-FORUM-success?style=for-the-badge)](https://community.home-assistant.io)
 
-# HomeAssistant - SamsungTV Custom Component
+# HomeAssistant - SamsungTV Tizen Component
 
-This is a custom component to allow control of SamsungTV devices in [HomeAssistant](https://home-assistant.io). Is a modified version of the built-in [samsungtv](https://www.home-assistant.io/integrations/samsungtv/) with some extra features:
+This is a custom component to allow control of SamsungTV devices in [HomeAssistant](https://home-assistant.io). Is a modified version of the built-in [samsungtv](https://www.home-assistant.io/integrations/samsungtv/) with some extra features.<br/>
+**This plugin is only for 2016+ TVs model!** (maybe all tizen family)
 
 # Additional Features:
 
 * Ability to send keys using a native Home Assistant service
+* Ability to send chained key commands using a native Home Assistant service
+* Supports Assistant commands (Google Home, should work with Alexa too, but untested)
+* Extended volume control
 * Ability to customize source list at media player dropdown list
+* Migrate SamsungCtl to SamsungTvWs 
+* Cast video URLs to Samsung TV
+* Connect to SmartThings Cloud API for additional features: see TV channel names, see which HDMI source is selected, improved on / off states
 
 ![N|Solid](https://i.imgur.com/8mCGZoO.png)
 ![N|Solid](https://i.imgur.com/t3e4bJB.png)
+
+
+# Installation
+
+### 1. Easy Mode
+
+TODO
+
+### 2. Manual
+
+Install it as you would do with any homeassistant custom component:
+
+1. Download `custom_components` folder.
+2. Copy the `samsungtv_custom` direcotry within the `custom_components` directory of your homeassistant installation. The `custom_components` directory resides within your homeassistant configuration directory.
+**Note**: if the custom_components directory does not exist, you need to create it.
+After a correct installation, your configuration directory should look like the following.
+    ```
+    └── ...
+    └── configuration.yaml
+    └── custom_components
+        └── samsungtv_custom
+            └── __init__.py
+            └── media_player.py
+            └── remote.py
+            └── shortcuts.py
+            └── smartthings.py
+            └── manifest.json
+    ```
 
 
 # Configuration
@@ -26,21 +61,83 @@ Edit it by adding the following lines:
     media_player:
       - platform: samsungtv_custom
         host: IP_ADDRESS
-        sourcelist: '{"PlayStation": "KEY_HDMI1", "RaspberryPi": "KEY_HDMI2", "Chromecast": "KEY_HDMI3"}'
+        port: 8002
+        mac: MAC_ADDRESS
     ```
     **Note**: This is the same as the configuration for the built-in [Samsung Smart TV](https://www.home-assistant.io/integrations/samsungtv/) component.
 
     ### Custom configuration variables
 
-    **sourcelist:**<br/>
+    **update_method:**<br/>
+    (string)(Optional)<br/>
+    This change the ping method used for state update. Values: "default" and "ping"<br/>
+    Default value: "default"<br/>
+    Example value: "ping"<br/>
+    
+    **update_custom_ping_url:**<br/>
+    (string)(Optional)<br/>
+    Use custom endpoint to ping.<br/>
+    Default value: PING TO 8001 ENDPOINT<br/>
+    Example value: "http://192.168.1.77:9197/dmr"<br/>
+    
+    **source_list:**<br/>
     (json)(Optional)<br/>
-    This contains the visible sources in the dropdown list in media player UI.<br/>
+    This contains the KEYS visible sources in the dropdown list in media player UI.<br/>
     Default value: '{"TV": "KEY_TV", "HDMI": "KEY_HDMI"}'<br/>
+    You can also chain KEYS, example: '{"TV": "KEY_SOURCES+KEY_ENTER"}'<br/>
+    And even add delays (in milliseconds) between sending KEYS, example:<br/>
+    '{"TV": "KEY_SOURCES+500+KEY_ENTER"}'<br/>
+    **Warning: changing input source with voice commands only works if you set the device name in `source_list` as one of the whitelisted words that can be seen on [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes#mode-settings) (under "Mode Settings")**<br/>
+    
+    **app_list:**<br/>
+    (json)(Optional)<br/>
+    This contains the APPS visible sources in the dropdown list in media player UI.<br/>
+    Default value: AUTOGENERATED<br/>
+    Example value: '{"Netflix": "11101200001", "YouTube": "111299001912", "Spotify": "3201606009684"}'<br/>
+    Known lists of App IDs: [List 1](https://github.com/tavicu/homebridge-samsung-tizen/issues/26#issuecomment-447424879), [List 2](https://github.com/Ape/samsungctl/issues/75#issuecomment-404941201)
+
+    **api_key:**<br/>
+    (string)(Optional)<br/>
+    API Key for the SmartThings Cloud API, this is optional but adds better state handling on, off, channel name, hdmi source, and a few new keys: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc.
+    [How to get an API Key for SmartThings](https://github.com/pegatron89/smartthingstv#set-up)<br/>
+    _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
+    
+    **device_id:**<br/>
+    (string)(Optional)<br/>
+    Although this is an optional value, it is mandatory if you've set a SmartThings API Key in order to identify your device in the API.
+    [How to get a device ID from SmartThings](https://github.com/pegatron89/smartthingstv#set-up)<br/>
+    _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
+
 
 2. Reboot Home Assistant
 3. Congrats! You're all set!
 
 # Usage
+
+### Known Supported Voice Commands
+
+* Turn on `SAMSUNG-TV-NAME-HERE` (for some older TVs this only works if the TV is connected by LAN cable to the Network)
+* Turn off `SAMSUNG-TV-NAME-HERE`
+* Volume up on `SAMSUNG-TV-NAME-HERE` (increases volume by 1)
+* Volume down on `SAMSUNG-TV-NAME-HERE` (decreases volume by 1)
+* Set volume to 50 on `SAMSUNG-TV-NAME-HERE` (sets volume to 50 out of 100)
+* Mute `SAMSUNG-TV-NAME-HERE` (sets volume to 0)
+* Change input source to `DEVICE-NAME-HERE` on `SAMSUNG-TV-NAME-HERE` (only works if `DEVICE-NAME-HERE` is a whitelisted word from [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes) under "Mode Settings")
+
+(if you find more supported voice commands, please create an issue so I can add them here)
+
+### Cast to TV
+
+`service: media_player.play_media`
+
+```
+{
+  "entity_id": "media_player.samsungtv",
+  "media_content_type": "url",
+  "media_content_id": "FILE_URL",
+}
+```
+_Replace FILE_URL with the url of your file._
 
 ### Send Keys
 ```
@@ -70,6 +167,8 @@ tv_channel_down:
 
 ***Key codes***
 ---------------
+If SmartThings API was enabled by setting `api_key` and `device_id`, then these codes are also supported: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc.
+
 The list of accepted keys may vary depending on the TV model, but the following list has some common key codes and their descriptions.
 
 *Power Keys*
@@ -94,10 +193,6 @@ KEY_SVIDEO1|SVideo1
 KEY_SVIDEO2|SVideo2
 KEY_SVIDEO3|SVideo3
 KEY_HDMI|HDMI
-KEY_HDMI1|HDMI1
-KEY_HDMI2|HDMI2
-KEY_HDMI3|HDMI3
-KEY_HDMI4|HDMI4
 KEY_FM_RADIO|FMRadio
 KEY_DVI|DVI
 KEY_DVR|DVR
