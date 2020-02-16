@@ -11,7 +11,7 @@ import websocket
 import requests
 import time
 
-from .samsungtvws.remote import SamsungTVWS
+from .remote import SamsungTVWS
 
 from homeassistant import util
 from homeassistant.components.media_player import (
