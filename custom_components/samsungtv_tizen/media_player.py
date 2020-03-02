@@ -54,6 +54,8 @@ from homeassistant.const import (
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import dt as dt_util
 
+CONF_SHOW_CHANNEL_NR = "show_channel_number"
+
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Samsung TV Remote"
@@ -99,6 +101,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_APP_LIST): cv.string,
         vol.Optional(CONF_DEVICE_ID): cv.string,
         vol.Optional(CONF_API_KEY): cv.string,
+        vol.Optional(CONF_SHOW_CHANNEL_NR, default=False): cv.boolean,
         vol.Optional(CONF_BROADCAST_ADDRESS): cv.string,
     }
 )
@@ -126,6 +129,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         app_list = config.get(CONF_APP_LIST)
         api_key = config.get(CONF_API_KEY)
         device_id = config.get(CONF_DEVICE_ID)
+        show_channel_number = config.get(CONF_SHOW_CHANNEL_NR)
     elif discovery_info is not None:
         tv_name = discovery_info.get("name")
         model = discovery_info.get("model_name")
@@ -150,7 +154,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, broadcast)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -159,7 +163,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerDevice):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, broadcast):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
@@ -167,6 +171,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._name = name
         self._api_key = api_key
         self._device_id = device_id
+        self._show_channel_number = show_channel_number
         self._timeout = timeout
         self._mac = mac
         self._update_method = update_method
@@ -355,7 +360,10 @@ class SamsungTVDevice(MediaPlayerDevice):
                 elif self._cloud_channel_name == "":
                     return self._cloud_channel
                 else:
-                    return self._cloud_channel_name + " (" + self._cloud_channel + ")"
+                    if self._show_channel_number:
+                        return self._cloud_channel_name + " (" + self._cloud_channel + ")"
+                    else:
+                        return self._cloud_channel_name
             else:
                 if self._source == "TV/HDMI":
                     cloud_key = ""
