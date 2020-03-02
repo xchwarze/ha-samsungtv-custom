@@ -40,6 +40,7 @@ from homeassistant.components.media_player.const import (
     MEDIA_TYPE_URL,
 )
 from homeassistant.const import (
+    CONF_BROADCAST_ADDRESS,
     CONF_HOST,
     CONF_MAC,
     CONF_NAME,
@@ -97,7 +98,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SOURCE_LIST, default=DEFAULT_SOURCE_LIST): cv.string,
         vol.Optional(CONF_APP_LIST): cv.string,
         vol.Optional(CONF_DEVICE_ID): cv.string,
-        vol.Optional(CONF_API_KEY): cv.string
+        vol.Optional(CONF_API_KEY): cv.string,
+        vol.Optional(CONF_BROADCAST_ADDRESS): cv.string,
     }
 )
 
@@ -116,6 +118,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         port = config.get(CONF_PORT)
         name = config.get(CONF_NAME)
         mac = config.get(CONF_MAC)
+        broadcast = config.get(CONF_BROADCAST_ADDRESS)
         timeout = config.get(CONF_TIMEOUT)
         update_method = config.get(CONF_UPDATE_METHOD)
         update_custom_ping_url = config.get(CONF_UPDATE_CUSTOM_PING_URL)
@@ -147,7 +150,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, broadcast)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -156,7 +159,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerDevice):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, broadcast):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
@@ -168,6 +171,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._mac = mac
         self._update_method = update_method
         self._update_custom_ping_url = update_custom_ping_url
+        self._broadcast = broadcast
         self._source = None
         self._source_list = json.loads(source_list)
         self._app_list = json.loads(app_list) if app_list is not None else None
@@ -461,7 +465,11 @@ class SamsungTVDevice(MediaPlayerDevice):
                 _LOGGER.info("TV is powering off, not sending WOL")
                 return
 
-            wakeonlan.send_magic_packet(self._mac)
+            if self._broadcast:
+                wakeonlan.send_magic_packet(self._mac, ip_address=self._broadcast)
+            else:
+                wakeonlan.send_magic_packet(self._mac)
+
             time.sleep(2)
             self._ping_device()
         else:
