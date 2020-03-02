@@ -233,7 +233,20 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def _ping_device(self):
         # HTTP ping
-        if self._is_ws_connection and self._update_method == "ping":
+        if self._update_method == "smartthings" and self._api_key and self._device_id:
+
+            if hasattr(self, '_cloud_state'):
+
+                if self._cloud_state == 'off':
+                    self._state = STATE_OFF
+                else:
+                    self._state = STATE_ON
+
+            else:
+                self._state = STATE_OFF
+
+        elif self._is_ws_connection and self._update_method == "ping":
+
             try:
                 ping_url = "http://{}:8001/api/v2/".format(self._host)
                 if self._update_custom_ping_url is not None:
@@ -297,10 +310,14 @@ class SamsungTVDevice(MediaPlayerDevice):
     @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
     def update(self):
         """Update state of device."""
-        self._ping_device()
-
-        if self._api_key and self._device_id:
+        if self._update_method == "smartthings" and self._api_key and self._device_id:
             smartthings.device_update(self)
+            self._ping_device()
+        else:
+            self._ping_device()
+            """Still required to get source and media title"""
+            if self._api_key and self._device_id:
+                smartthings.device_update(self)
 
     def send_command(self, payload, command_type = "send_key", retry_count = 1):
         """Send a key to the tv and handles exceptions."""
