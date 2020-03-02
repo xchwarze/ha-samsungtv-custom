@@ -9,7 +9,7 @@
 This is a custom component to allow control of SamsungTV devices in [HomeAssistant](https://home-assistant.io). Is a modified version of the built-in [samsungtv](https://www.home-assistant.io/integrations/samsungtv/) with some extra features.<br/>
 **This plugin is only for 2016+ TVs model!** (maybe all tizen family)
 
-Development for this project relies solely on donations, so if you enjoy this component, please consider [becoming a patron](https://www.patreon.com/powder_tech) or [donating](https://powder.media/donate) to ensure it's continued survival.
+**Development for this project relies solely on donations, so if you enjoy this component, please consider [becoming a patron](https://www.patreon.com/powder_tech) or [donating](https://powder.media/donate) to ensure it's continued survival.**
 
 # Additional Features:
 
@@ -30,7 +30,8 @@ Development for this project relies solely on donations, so if you enjoy this co
 
 ### 1. Easy Mode
 
-TODO
+Install via HACS.
+
 
 ### 2. Manual
 
@@ -47,9 +48,11 @@ After a correct installation, your configuration directory should look like the 
         └── samsungtv_tizen
             └── __init__.py
             └── media_player.py
-            └── remote.py
+            └── websockets.py
             └── shortcuts.py
             └── smartthings.py
+            └── upnp.py
+            └── exceptions.py
             └── manifest.json
     ```
 
@@ -70,11 +73,17 @@ Edit it by adding the following lines:
 
     ### Custom configuration variables
 
+    **broadcast_address:**<br/>
+    (string)(Optional)<br/>
+    The ip address of the host to send the magic packet (for wakeonlan) to if the "mac" property is also set.<br/>
+    Default value: "255.255.255.255"<br/>
+    Example value: "192.168.1.255"<br/>
+
     **update_method:**<br/>
     (string)(Optional)<br/>
-    This change the ping method used for state update. Values: "default" and "ping"<br/>
-    Default value: "default"<br/>
-    Example value: "ping"<br/>
+    This change the ping method used for state update. Values: "ping", "websockets" and "smartthings"<br/>
+    Default value: "ping"<br/>
+    Example value: "websockets"<br/>
     
     **update_custom_ping_url:**<br/>
     (string)(Optional)<br/>
@@ -110,6 +119,9 @@ Edit it by adding the following lines:
     [How to get a device ID from SmartThings](https://github.com/pegatron89/smartthingstv#set-up)<br/>
     _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
 
+    **show_channel_number:**<br/>
+    (boolean)(Optional)<br/>
+    If the SmartThings API is enabled (by settings "api_key" and "device_id"), then the TV Channel Names will show as media titles, by setting this to True the TV Channel Number will also be attached to the end of the media title. (when applicable)
 
 2. Reboot Home Assistant
 3. Congrats! You're all set!
