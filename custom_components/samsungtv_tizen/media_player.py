@@ -262,7 +262,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
         # WS ping
         else:
-            self.send_command("KEY")
+            self.send_command("KEY", "send_key", 1, 0)
 
     def _get_running_app(self):
 
@@ -319,7 +319,7 @@ class SamsungTVDevice(MediaPlayerDevice):
             if self._api_key and self._device_id:
                 smartthings.device_update(self)
 
-    def send_command(self, payload, command_type = "send_key", retry_count = 1):
+    def send_command(self, payload, command_type = "send_key", retry_count = 1, key_press_delay=None):
         """Send a key to the tv and handles exceptions."""
         if self._power_off_in_progress() and payload not in ("KEY_POWER", "KEY_POWEROFF"):
             _LOGGER.info("TV is powering off, not sending command: %s", payload)
@@ -333,7 +333,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                         #run_app(self, app_id, app_type='DEEP_LINK', meta_tag='')
                         self._ws.run_app(payload)
                     else:
-                        self._ws.send_key(payload)
+                        self._ws.send_key(payload, key_press_delay)
 
                     break
                 except (
