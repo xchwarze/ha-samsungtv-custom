@@ -188,7 +188,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         if port == 8002:
             self._gen_token_file()
 
-        self._remote = SamsungTVWS(
+        self._ws = SamsungTVWS(
             name=name,
             host=host,
             port=port,
@@ -266,7 +266,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         return 'TV/HDMI'
 
     def _gen_installed_app_list(self):
-        app_list = self._remote.app_list()
+        app_list = self._ws.app_list()
 
         # app_list is a list of dict
         clean_app_list = {}
@@ -300,9 +300,9 @@ class SamsungTVDevice(MediaPlayerDevice):
                 try:
                     if command_type == "run_app":
                         #run_app(self, app_id, app_type='DEEP_LINK', meta_tag='')
-                        self._remote.run_app(payload)
+                        self._ws.run_app(payload)
                     else:
-                        self._remote.send_key(payload)
+                        self._ws.send_key(payload)
 
                     break
                 except (
@@ -310,19 +310,19 @@ class SamsungTVDevice(MediaPlayerDevice):
                     AttributeError, 
                     BrokenPipeError
                 ):
-                    self._remote.close()
+                    self._ws.close()
                     _LOGGER.debug("Error in send_command() -> ConnectionResetError/AttributeError/BrokenPipeError")
 
             self._state = STATE_ON
         except websocket._exceptions.WebSocketTimeoutException:
             # We got a response so it's on.
             self._state = STATE_ON
-            self._remote.close()
+            self._ws.close()
             _LOGGER.debug("Failed sending payload %s command_type %s", payload, command_type, exc_info=True)
 
         except OSError:
             self._state = STATE_OFF
-            self._remote.close()
+            self._ws.close()
             _LOGGER.debug("Error in send_command() -> OSError")
 
         if self._power_off_in_progress():
@@ -481,7 +481,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
         # Force closing of remote session to provide instant UI feedback
         try:
-            self._remote.close()
+            self._ws.close()
         except OSError:
             _LOGGER.debug("Could not establish connection.")
 
