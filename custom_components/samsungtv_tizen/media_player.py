@@ -321,9 +321,6 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def send_command(self, payload, command_type = "send_key", retry_count = 1, key_press_delay=None):
         """Send a key to the tv and handles exceptions."""
-        if self._power_off_in_progress() and payload not in ("KEY_POWER", "KEY_POWEROFF"):
-            _LOGGER.info("TV is powering off, not sending command: %s", payload)
-            return False
 
         try:
             # recreate connection if connection was dead
@@ -356,9 +353,6 @@ class SamsungTVDevice(MediaPlayerDevice):
             self._ws.close()
             _LOGGER.debug("Error in send_command() -> OSError")
 
-        if self._power_off_in_progress():
-            self._state = STATE_OFF
-
         return True
 
     @property
@@ -370,55 +364,34 @@ class SamsungTVDevice(MediaPlayerDevice):
     def name(self):
         """Return the name of the device."""
         return self._name
+
     @property
     def media_title(self):
         """Title of current playing media."""
-        if hasattr(self, '_cloud_state'):
-            if self._cloud_state == "off":
-                return STATE_OFF
+        if self._state == STATE_OFF and self._update_method != "smartthings":
+            return None
+
+        if self._api_key and self._device_id and hasattr(self, '_cloud_state'):
+            if self._cloud_state == STATE_OFF:
+                self._state = STATE_OFF
+                return None
             elif self._cloud_source in ["digitalTv", "TV"]:
-                if self._cloud_channel_name != "" and self._cloud_channel == '':
-                    return self._cloud_channel_name
-                elif self._cloud_channel_name == "":
-                    return self._cloud_channel
-                else:
+                if self._cloud_channel_name != "" and self._cloud_channel != "":
                     if self._show_channel_number:
                         return self._cloud_channel_name + " (" + self._cloud_channel + ")"
                     else:
                         return self._cloud_channel_name
-            else:
-                if self._source == "TV/HDMI":
-                    cloud_key = ""
+                elif self._cloud_channel_name != "":
+                    return self._cloud_channel_name
+                elif self._cloud_channel != "":
+                    return self._cloud_channel
 
-                    if self._cloud_source in ["digitalTv", "TV"]:
-                        cloud_key = "ST_TV"
-                    else:
-                        cloud_key = "ST_" + self._cloud_source
+        return self._source
 
-                    found_source = ""
-
-                    for attr, value in self._source_list.items():
-                        if value == cloud_key:
-                            found_source = attr
-                    
-                    if found_source != "":
-                        return found_source
-                    else:
-                        return self._cloud_source
-                else:
-                    return self._source
-        else:
-            return self._source
     @property
     def state(self):
         """Return the state of the device."""
-        if hasattr(self, '_cloud_state'):
-            if self._cloud_state == 'off':
-                return STATE_OFF
-            else:
-                return STATE_ON
-        else:
-            return self._state
+        return self._state
 
     @property
     def is_volume_muted(self):
@@ -447,33 +420,34 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def source(self):
         """Return the current input source."""
-        if hasattr(self, '_cloud_state'):
-            if self._cloud_state == "off":
-                self._source = None
-            else:
-                running_app = self._get_running_app()
-                if running_app == "TV/HDMI":
-
-                    cloud_key = ""
-                    if self._cloud_source in ["digitalTv", "TV"]:
-                        cloud_key = "ST_TV"
-                    else:
-                        cloud_key = "ST_" + self._cloud_source
-
-                    found_source = ""
-
-                    for attr, value in self._source_list.items():
-                        if value == cloud_key:
-                            found_source = attr
-                    
-                    if found_source != "":
-                        self._source = found_source
-                    else:
-                        self._source = None
+        if self._state != STATE_OFF:
+            if self._api_key and self._device_id and hasattr(self, '_cloud_state'):
+                if self._cloud_state == STATE_OFF:
+                    self._source = None
                 else:
-                    self._source = running_app
-        elif self._state != STATE_OFF:
-            self._source = self._get_running_app()
+                    running_app = self._get_running_app()
+                    if running_app == "TV/HDMI":
+
+                        cloud_key = ""
+                        if self._cloud_source in ["digitalTv", "TV"]:
+                            cloud_key = "ST_TV"
+                        else:
+                            cloud_key = "ST_" + self._cloud_source
+
+                        found_source = ""
+
+                        for attr, value in self._source_list.items():
+                            if value == cloud_key:
+                                found_source = attr
+                        
+                        if found_source != "":
+                            self._source = found_source
+                        else:
+                            self._source = running_app
+                    else:
+                        self._source = running_app
+            else:
+                self._source = self._get_running_app()
         else:
             self._source = None
         return self._source
