@@ -507,12 +507,9 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def turn_off(self):
         """Turn off media player."""
-        # In my tests if _end_of_power_off < 15 WS ping method randomly fail!!!
         self._end_of_power_off = dt_util.utcnow() + timedelta(seconds=15)
 
-        if self._api_key and self._device_id:
-           smartthings.send_command(self, "", "switch")
-        elif self._is_ws_connection:
+        if self._is_ws_connection:
             self.send_command("KEY_POWER")
         else:
             self.send_command("KEY_POWEROFF")
