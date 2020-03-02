@@ -11,7 +11,7 @@ import websocket
 import requests
 import time
 
-from .remote import SamsungTVWS
+from .websockets import SamsungTVWS
 
 from .smartthings import smartthingstv as smartthings
 
