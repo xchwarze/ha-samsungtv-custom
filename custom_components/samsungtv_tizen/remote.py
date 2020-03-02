@@ -25,23 +25,32 @@ import logging
 import time
 import ssl
 import websocket
-from . import shortcuts
 import requests
+from . import exceptions
+from . import shortcuts
+
+_LOGGING = logging.getLogger(__name__)
+
 
 class SamsungTVWS:
     _URL_FORMAT = 'ws://{host}:{port}/api/v2/channels/samsung.remote.control?name={name}'
     _SSL_URL_FORMAT = 'wss://{host}:{port}/api/v2/channels/samsung.remote.control?name={name}&token={token}'
+    _REST_URL_FORMAT = 'http://{host}:8001/api/v2/{append}'
 
-    def __init__(self, host, token=None, token_file=None, port=8001, timeout=None, key_press_delay=1, name='SamsungTvRemote', app_list=None):
+    def __init__(self, host, token=None, token_file=None, port=8001, timeout=None, key_press_delay=1,
+                 name='SamsungTvRemote', app_list=None):
         self.host = host
-        self._app_list = app_list
         self.token = token
         self.token_file = token_file
+        self._app_list = app_list
         self.port = port
         self.timeout = None if timeout == 0 else timeout
         self.key_press_delay = key_press_delay
         self.name = name
         self.connection = None
+
+    def __enter__(self):
+        return self
 
     def __exit__(self, type, value, traceback):
         self.close()
@@ -68,9 +77,17 @@ class SamsungTVWS:
         else:
             return self._URL_FORMAT.format(**params)
 
+    def _format_rest_url(self, append=''):
+        params = {
+            'host': self.host,
+            'append': append,
+        }
+
+        return self._REST_URL_FORMAT.format(**params)
+
     def _get_token(self):
         if self.token_file is not None:
-            try :
+            try:
                 with open(self.token_file, 'r') as token_file:
                     return token_file.readline()
             except:
@@ -79,65 +96,116 @@ class SamsungTVWS:
             return self.token
 
     def _set_token(self, token):
+        _LOGGING.info('New token %s', token)
         if self.token_file is not None:
+            _LOGGING.debug('Save token to file', token)
             with open(self.token_file, 'w') as token_file:
                 token_file.write(token)
         else:
-            logging.info('New token %s', token)
+            self.token = token
 
-    def _ws_send(self, payload):
+    def _ws_send(self, command, key_press_delay=None):
         if self.connection is None:
             self.open()
 
+        payload = json.dumps(command)
         self.connection.send(payload)
-        time.sleep(self.key_press_delay)
+
+        if key_press_delay is None:
+            time.sleep(self.key_press_delay)
+        else:
+            time.sleep(key_press_delay)
+
+    def _rest_request(self, target, method='GET'):
+        url = self._format_rest_url(target)
+        try:
+            if method == 'POST':
+                return requests.post(url, timeout=self.timeout)
+            elif method == 'PUT':
+                return requests.put(url, timeout=self.timeout)
+            elif method == 'DELETE':
+                return requests.delete(url, timeout=self.timeout)
+            else:
+                return requests.get(url, timeout=self.timeout)
+        except requests.ConnectionError:
+            raise exceptions.HttpApiError('TV unreachable or feature not supported on this model.')
+
+    def _process_api_response(self, response):
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            _LOGGING.debug('Failed to parse response from TV. response text: %s', response)
+            raise exceptions.ResponseError('Failed to parse response from TV. Maybe feature not supported on this model')
 
     def open(self):
         is_ssl = self._is_ssl_connection()
         url = self._format_websocket_url(is_ssl)
         sslopt = {'cert_reqs': ssl.CERT_NONE} if is_ssl else {}
 
-        logging.debug('WS url %s', url)
-
+        _LOGGING.debug('WS url %s', url)
         self.connection = websocket.create_connection(
             url,
             self.timeout,
             sslopt=sslopt
         )
 
-        response = json.loads(self.connection.recv())
-
+        response = self._process_api_response(self.connection.recv())
         if response.get('data') and response.get('data').get('token'):
             token = response.get('data').get('token')
+            _LOGGING.debug('Got token %s', token)
             self._set_token(token)
 
         if response['event'] != 'ms.channel.connect':
             self.close()
-            raise Exception(response)
+            raise exceptions.ConnectionFailure(response)
 
     def close(self):
         if self.connection:
             self.connection.close()
 
         self.connection = None
-        logging.debug('Connection closed.')
+        _LOGGING.debug('Connection closed.')
 
-    def send_key(self, key):
-        payload = json.dumps({
-            'method': 'ms.remote.control',
-            'params': {
-                'Cmd': 'Click',
-                'DataOfCmd': key,
-                'Option': 'false',
-                'TypeOfRemote': 'SendRemoteKey'
-            }
-        })
+    def send_key(self, key, key_press_delay=None, cmd='Click'):
+        _LOGGING.debug('Sending key %s', key)
+        self._ws_send(
+            {
+                'method': 'ms.remote.control',
+                'params': {
+                    'Cmd': cmd,
+                    'DataOfCmd': key,
+                    'Option': 'false',
+                    'TypeOfRemote': 'SendRemoteKey'
+                }
+            },
+            key_press_delay
+        )
 
-        logging.info('Sending key %s', key)
-        self._ws_send(payload)
+    def hold_key(self, key, seconds):
+        self.send_key(key, cmd='Press')
+        time.sleep(seconds)
+        self.send_key(key, cmd='Release')
+
+    def move_cursor(self, x, y, duration=0):
+        self._ws_send(
+            {
+                'method': 'ms.remote.control',
+                'params': {
+                    'Cmd': 'Move',
+                    'Position': {
+                        'x': x,
+                        'y': y,
+                        'Time': str(duration)
+                    },
+                    'TypeOfRemote': 'ProcessMouseDevice'
+                }
+            },
+            key_press_delay=0
+        )
 
     def run_app(self, app_id, app_type='DEEP_LINK', meta_tag=''):
-        payload = json.dumps({
+        _LOGGING.debug('Sending run app app_id: %s app_type: %s meta_tag: %s', app_id, app_type, meta_tag)
+        self._ws_send({
             'method': 'ms.channel.emit',
             'params': {
                 'event': 'ed.apps.launch',
@@ -152,11 +220,8 @@ class SamsungTVWS:
             }
         })
 
-        logging.info('Sending run app app_id: %s app_type: %s meta_tag: %s', app_id, app_type, meta_tag)
-        self._ws_send(payload)
-
     def open_browser(self, url):
-        logging.info('Opening url in browser %s', url)
+        _LOGGING.debug('Opening url in browser %s', url)
         self.run_app(
             'org.tizen.browser',
             'NATIVE_LAUNCH',
@@ -164,7 +229,8 @@ class SamsungTVWS:
         )
 
     def app_list(self):
-        payload = json.dumps({
+        _LOGGING.debug('Get app list')
+        self._ws_send({
             'method': 'ms.channel.emit',
             'params': {
                 'event': 'ed.installedApp.get',
@@ -172,13 +238,36 @@ class SamsungTVWS:
             }
         })
 
-        logging.info('Get app list')
-        self._ws_send(payload)
-        response = json.loads(self.connection.recv())
+        response = self._process_api_response(self.connection.recv())
         if response.get('data') and response.get('data').get('data'):
             return response.get('data').get('data')
         else:
             return response
+
+    def rest_device_info(self):
+        _LOGGING.debug('Get device info via rest api')
+        response = self._rest_request('')
+        return self._process_api_response(response.text)
+
+    def rest_app_status(self, app_id):
+        _LOGGING.debug('Get app %s status via rest api', app_id)
+        response = self._rest_request('applications/' + app_id)
+        return self._process_api_response(response.text)
+
+    def rest_app_run(self, app_id):
+        _LOGGING.debug('Run app %s via rest api', app_id)
+        response = self._rest_request('applications/' + app_id, 'POST')
+        return self._process_api_response(response.text)
+
+    def rest_app_close(self, app_id):
+        _LOGGING.debug('Close app %s via rest api', app_id)
+        response = self._rest_request('applications/' + app_id, 'DELETE')
+        return self._process_api_response(response.text)
+
+    def rest_app_install(self, app_id):
+        _LOGGING.debug('Install app %s via rest api', app_id)
+        response = self._rest_request('applications/' + app_id, 'PUT')
+        return self._process_api_response(response.text)
 
     def shortcuts(self):
         return shortcuts.SamsungTVShortcuts(self)
