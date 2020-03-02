@@ -15,6 +15,8 @@ from .remote import SamsungTVWS
 
 from .smartthings import smartthingstv as smartthings
 
+from .upnp import upnp
+
 from homeassistant import util
 from homeassistant.components.media_player import (
     MediaPlayerDevice,
@@ -196,6 +198,10 @@ class SamsungTVDevice(MediaPlayerDevice):
             app_list=self._app_list
         )
 
+        self._upnp = upnp(
+            host=host
+        )
+
     def _gen_token_file(self):
         self._token_file = os.path.dirname(os.path.realpath(__file__)) + '/token-' + self._host + '.txt'
 
@@ -235,6 +241,29 @@ class SamsungTVDevice(MediaPlayerDevice):
         # WS ping
         else:
             self.send_command("KEY")
+
+    def _get_running_app(self):
+
+        if self._app_list is not None:
+
+            for app in self._app_list:
+
+                r = None
+
+                try:
+                    r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self._host, value=self._app_list[app]), timeout=0.5)
+                except requests.exceptions.RequestException as e:
+                    pass
+
+                if r is not None:
+                    data = r.text
+                    if data is not None:
+                        root = json.loads(data.encode('UTF-8'))
+                        if 'visible' in root:
+                            if root['visible']:
+                                return app
+
+        return 'TV/HDMI'
 
     def _gen_installed_app_list(self):
         app_list = self._remote.app_list()
@@ -360,7 +389,7 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def is_volume_muted(self):
         """Boolean if volume is currently muted."""
-        self._muted = self._remote.get_mute()
+        self._muted = self._upnp.get_mute()
         return self._muted
 
     @property
@@ -378,7 +407,7 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def volume_level(self):
         """Volume level of the media player (0..1)."""
-        self._volume = int(self._remote.get_volume()) / 100
+        self._volume = int(self._upnp.get_volume()) / 100
         return self._volume
     
     @property
@@ -388,7 +417,7 @@ class SamsungTVDevice(MediaPlayerDevice):
             if self._cloud_state == "off":
                 self._source = None
             else:
-                running_app = self._remote.get_running_app()
+                running_app = self._get_running_app()
                 if running_app == "TV/HDMI":
 
                     cloud_key = ""
@@ -410,7 +439,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                 else:
                     self._source = running_app
         elif self._state != STATE_OFF:
-            self._source = self._remote.get_running_app()
+            self._source = self._get_running_app()
         else:
             self._source = None
         return self._source
@@ -470,7 +499,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def set_volume_level(self, volume):
         """Set volume level, range 0..1."""
-        self._remote.set_volume(int(volume*100))
+        self._upnp.set_volume(int(volume*100))
 
     def media_play_pause(self):
         """Simulate play pause media player."""
@@ -535,12 +564,12 @@ class SamsungTVDevice(MediaPlayerDevice):
                 _LOGGER.error('Media ID must be an url (ex: "http://"')
                 return
 
-            self._remote.set_current_media(media_id)
+            self._upnp.set_current_media(media_id)
             self._playing = True
 
         # Trying to make stream component work on TV
         elif media_type == "application/vnd.apple.mpegurl":
-            self._remote.set_current_media(media_id)
+            self._upnp.set_current_media(media_id)
             self._playing = True
 
         else:
