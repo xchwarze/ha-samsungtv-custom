@@ -490,16 +490,18 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def turn_on(self):
         """Turn the media player on."""
-        if self._mac:
-            if self._power_off_in_progress():
-                _LOGGER.info("TV is powering off, not sending WOL")
-                return
+        if self._power_off_in_progress():
+            if self._is_ws_connection:
+                self.send_command("KEY_POWER")
+            else:
+                self.send_command("KEY_POWEROFF")
+            return
 
+        if self._mac:
             if self._broadcast:
                 wakeonlan.send_magic_packet(self._mac, ip_address=self._broadcast)
             else:
                 wakeonlan.send_magic_packet(self._mac)
-
             time.sleep(2)
             self._ping_device()
         else:
