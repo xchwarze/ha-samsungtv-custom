@@ -20,7 +20,7 @@ This is a custom component to allow control of SamsungTV devices in [HomeAssista
 * Ability to customize source list at media player dropdown list
 * Migrate SamsungCtl to SamsungTvWs 
 * Cast video URLs to Samsung TV
-* Connect to SmartThings Cloud API for additional features: see TV channel names, see which HDMI source is selected, improved on / off states
+* Connect to SmartThings Cloud API for additional features: see TV channel names, see which HDMI source is selected, more key codes to change input source
 
 ![N|Solid](https://i.imgur.com/8mCGZoO.png)
 ![N|Solid](https://i.imgur.com/t3e4bJB.png)
