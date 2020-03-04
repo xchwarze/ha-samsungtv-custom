@@ -284,6 +284,10 @@ class SamsungTVDevice(MediaPlayerDevice):
                         if 'visible' in root:
                             if root['visible']:
                                 return app
+                                
+                for attr, value in self._app_list.items():
+                    if value == self._cloud_channel_name:
+                        return attr
 
         return 'TV/HDMI'
 
