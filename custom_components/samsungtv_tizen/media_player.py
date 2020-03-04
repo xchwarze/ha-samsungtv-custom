@@ -379,17 +379,18 @@ class SamsungTVDevice(MediaPlayerDevice):
             if self._cloud_state == STATE_OFF:
                 self._state = STATE_OFF
                 return None
-            elif self._cloud_source in ["digitalTv", "TV"]:
-                if self._cloud_channel_name != "" and self._cloud_channel != "":
-                    if self._show_channel_number:
-                        return self._cloud_channel_name + " (" + self._cloud_channel + ")"
-                    else:
+            else:
+                running_app = self._get_running_app()
+                if running_app == "TV/HDMI" and self._cloud_source in ["digitalTv", "TV"]:
+                    if self._cloud_channel_name != "" and self._cloud_channel != "":
+                        if self._show_channel_number:
+                            return self._cloud_channel_name + " (" + self._cloud_channel + ")"
+                        else:
+                            return self._cloud_channel_name
+                    elif self._cloud_channel_name != "":
                         return self._cloud_channel_name
-                elif self._cloud_channel_name != "":
-                    return self._cloud_channel_name
-                elif self._cloud_channel != "":
-                    return self._cloud_channel
-
+                    elif self._cloud_channel != "":
+                        return self._cloud_channel
         return self._source
 
     @property
