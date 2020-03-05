@@ -167,7 +167,7 @@ service: media_player.play_media
   "media_content_id": "KEY_CODE",
 }
 ```
-**Note**: Change "KEY_CODEKEY" by desired key_code.
+**Note**: Change "KEY_CODEKEY" by desired key_code. (also works with key chaining and SmartThings keys: ST_TV, ST_HDMI1, ST_HDMI2, ST_HDMI3, etc.)
 
 Script example:
 ```

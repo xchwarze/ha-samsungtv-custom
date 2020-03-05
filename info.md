@@ -17,40 +17,6 @@ This is a custom component to allow control of SamsungTV devices in [HomeAssista
 * Cast video URLs to Samsung TV
 * Connect to SmartThings Cloud API for additional features: see TV channel names, see which HDMI source is selected, more key codes to change input source
 
-![N|Solid](https://i.imgur.com/8mCGZoO.png)
-![N|Solid](https://i.imgur.com/t3e4bJB.png)
-
-
-# Installation
-
-### 1. Easy Mode
-
-Install via HACS.
-
-
-### 2. Manual
-
-Install it as you would do with any homeassistant custom component:
-
-1. Download `custom_components` folder.
-2. Copy the `samsungtv_tizen` direcotry within the `custom_components` directory of your homeassistant installation. The `custom_components` directory resides within your homeassistant configuration directory.
-**Note**: if the custom_components directory does not exist, you need to create it.
-After a correct installation, your configuration directory should look like the following.
-    ```
-    └── ...
-    └── configuration.yaml
-    └── custom_components
-        └── samsungtv_tizen
-            └── __init__.py
-            └── media_player.py
-            └── websockets.py
-            └── shortcuts.py
-            └── smartthings.py
-            └── upnp.py
-            └── exceptions.py
-            └── manifest.json
-    ```
-
 
 # Configuration
 
@@ -93,7 +59,7 @@ Edit it by adding the following lines:
     You can also chain KEYS, example: '{"TV": "KEY_SOURCES+KEY_ENTER"}'<br/>
     And even add delays (in milliseconds) between sending KEYS, example:<br/>
     '{"TV": "KEY_SOURCES+500+KEY_ENTER"}'<br/>
-    Resources: [key codes](./Key_codes.md) / [key patterns](./Key_chaining.md)<br/>
+    Resources: [key codes](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_codes.md) / [key patterns](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_chaining.md)<br/>
     **Warning: changing input source with voice commands only works if you set the device name in `source_list` as one of the whitelisted words that can be seen on [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes#mode-settings) (under "Mode Settings")**<br/>
     
     **app_list:**<br/>
@@ -107,13 +73,13 @@ Edit it by adding the following lines:
     **api_key:**<br/>
     (string)(Optional)<br/>
     API Key for the SmartThings Cloud API, this is optional but adds better state handling on, off, channel name, hdmi source, and a few new keys: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc.<br/>
-    [How to get an API Key for SmartThings](./Smartthings.md)<br/>
+    [How to get an API Key for SmartThings](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md)<br/>
     _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
     
     **device_id:**<br/>
     (string)(Optional)<br/>
     Although this is an optional value, it is mandatory if you've set a SmartThings API Key in order to identify your device in the API.<br/>
-    [How to get a device ID from SmartThings](./Smartthings.md)<br/>
+    [How to get a device ID from SmartThings](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md)<br/>
     _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
 
     **show_channel_number:**<br/>
@@ -162,7 +128,7 @@ service: media_player.play_media
   "media_content_id": "KEY_CODE",
 }
 ```
-**Note**: Change "KEY_CODEKEY" by desired key_code.
+**Note**: Change "KEY_CODEKEY" by desired key_code. (also works with key chaining and SmartThings keys: ST_TV, ST_HDMI1, ST_HDMI2, ST_HDMI3, etc.)
 
 Script example:
 ```
@@ -179,11 +145,11 @@ tv_channel_down:
 
 ***Key Codes***
 ---------------
-To see the complete list of known keys, [check this list](./Key_codes.md)
+To see the complete list of known keys, [check this list](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_codes.md)
 
 
 ***Key Chaining Patterns***
 ---------------
 Key chaining is also supported, which means a pattern of keys can be set by delimiting the keys with the "+" symbol, delays can also be set in milliseconds between the "+" symbols.
 
-[See the list of known Key Chaining Patterns](./Key_chaining.md)
+[See the list of known Key Chaining Patterns](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_chaining.md)
