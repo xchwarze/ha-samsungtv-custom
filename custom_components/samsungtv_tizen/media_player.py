@@ -179,6 +179,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._broadcast = broadcast
         self._source = None
         self._source_list = json.loads(source_list)
+        self._running_app = None
         self._app_list = json.loads(app_list) if app_list is not None else None
         self._uuid = uuid
         self._is_ws_connection = True if port in (8001, 8002) else False
@@ -268,6 +269,11 @@ class SamsungTVDevice(MediaPlayerDevice):
 
         if self._app_list is not None:
 
+            if hasattr(self, '_cloud_state') and self._cloud_channel_name != "":
+                for attr, value in self._app_list.items():
+                    if value == self._cloud_channel_name:
+                        return attr
+
             for app in self._app_list:
 
                 r = None
@@ -284,10 +290,6 @@ class SamsungTVDevice(MediaPlayerDevice):
                         if 'visible' in root:
                             if root['visible']:
                                 return app
-                                
-                for attr, value in self._app_list.items():
-                    if value == self._cloud_channel_name:
-                        return attr
 
         return 'TV/HDMI'
 
@@ -322,6 +324,8 @@ class SamsungTVDevice(MediaPlayerDevice):
             """Still required to get source and media title"""
             if self._api_key and self._device_id:
                 smartthings.device_update(self)
+        if self._state == STATE_ON:
+            self._running_app = self._get_running_app()
 
     def send_command(self, payload, command_type = "send_key", retry_count = 1, key_press_delay=None):
         """Send a key to the tv and handles exceptions."""
@@ -380,8 +384,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                 self._state = STATE_OFF
                 return None
             else:
-                running_app = self._get_running_app()
-                if running_app == "TV/HDMI" and self._cloud_source in ["digitalTv", "TV"]:
+                if self._running_app == "TV/HDMI" and self._cloud_source in ["digitalTv", "TV"]:
                     if self._cloud_channel_name != "" and self._cloud_channel != "":
                         if self._show_channel_number:
                             return self._cloud_channel_name + " (" + self._cloud_channel + ")"
@@ -391,6 +394,10 @@ class SamsungTVDevice(MediaPlayerDevice):
                         return self._cloud_channel_name
                     elif self._cloud_channel != "":
                         return self._cloud_channel
+
+        if self._running_app != "TV/HDMI":
+            return self._running_app
+
         return self._source
 
     @property
@@ -430,8 +437,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                 if self._cloud_state == STATE_OFF:
                     self._source = None
                 else:
-                    running_app = self._get_running_app()
-                    if running_app == "TV/HDMI":
+                    if self._running_app == "TV/HDMI":
 
                         cloud_key = ""
                         if self._cloud_source in ["digitalTv", "TV"]:
@@ -448,11 +454,11 @@ class SamsungTVDevice(MediaPlayerDevice):
                         if found_source != "":
                             self._source = found_source
                         else:
-                            self._source = running_app
+                            self._source = self._running_app
                     else:
-                        self._source = running_app
+                        self._source = self._running_app
             else:
-                self._source = self._get_running_app()
+                self._source = self._running_app
         else:
             self._source = None
         return self._source
