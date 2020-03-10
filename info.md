@@ -153,3 +153,19 @@ To see the complete list of known keys, [check this list](https://github.com/jar
 Key chaining is also supported, which means a pattern of keys can be set by delimiting the keys with the "+" symbol, delays can also be set in milliseconds between the "+" symbols.
 
 [See the list of known Key Chaining Patterns](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_chaining.md)
+
+
+***Open Browser Page***
+---------------
+
+```
+service: media_player.play_media
+```
+
+```json
+{
+  "entity_id": "media_player.samsungtv",
+  "media_content_type": "browser",
+  "media_content_id": "https://www.google.com",
+}
+```

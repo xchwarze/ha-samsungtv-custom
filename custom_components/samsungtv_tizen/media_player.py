@@ -70,6 +70,7 @@ CONF_APP_LIST = "app_list"
 
 KNOWN_DEVICES_KEY = "samsungtv_known_devices"
 MEDIA_TYPE_KEY = "send_key"
+MEDIA_TYPE_BROWSER = "browser"
 KEY_PRESS_TIMEOUT = 0.5
 UPDATE_PING_TIMEOUT = 1
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=1)
@@ -608,6 +609,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         elif media_type == "application/vnd.apple.mpegurl":
             self._upnp.set_current_media(media_id)
             self._playing = True
+
+        elif media_type == MEDIA_TYPE_BROWSER:
+            self._ws.open_browser(media_id)
 
         else:
             _LOGGER.error("Unsupported media type")
