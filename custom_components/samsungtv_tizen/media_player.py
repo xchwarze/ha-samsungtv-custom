@@ -221,7 +221,7 @@ class SamsungTVDevice(MediaPlayerDevice):
             self._timeout = 45
 
             # Create token file for catch possible errors
-            try :
+            try:
                 handle = open(self._token_file, "w+")
                 handle.close()
             except:
