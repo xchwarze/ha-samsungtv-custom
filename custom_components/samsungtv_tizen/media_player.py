@@ -239,12 +239,10 @@ class SamsungTVDevice(MediaPlayerDevice):
 
             if hasattr(self, '_cloud_state'):
 
-                if self._cloud_state == 'off':
-                    self._state = STATE_OFF
-                else:
-                    self._state = STATE_ON
+                self._state = self._cloud_state
 
             else:
+
                 self._state = STATE_OFF
 
         elif self._is_ws_connection and self._update_method == "ping":
