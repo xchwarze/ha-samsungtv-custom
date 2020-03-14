@@ -130,8 +130,7 @@ Edit it by adding the following lines:
     **scan_app_http:**<br/>
     (boolean)(Optional)<br/>
     Allow you to disable the scan of running app polling port 8001 of the TV to have the refresh of the TV status and running App faster.<br/>
-    If the SmartThings API is enabled (by settings "api_key" and "device_id"), then this option is false by default and the scan is diabled. You can enable it setting the value to true.<br/>
-    If the SmartThings API is disabled, then this option is always set to true.
+    If the SmartThings API is enabled (by settings "api_key" and "device_id"), then it is better to set this option to false, otherwile leave it to true (default value).<br/>
 
 2. Reboot Home Assistant
 3. Congrats! You're all set!
