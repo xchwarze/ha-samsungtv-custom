@@ -111,7 +111,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_API_KEY): cv.string,
         vol.Optional(CONF_SHOW_CHANNEL_NR, default=False): cv.boolean,
         vol.Optional(CONF_BROADCAST_ADDRESS): cv.string,
-        vol.Optional(CONF_SCAN_APP_HTTP, default=False): cv.boolean,
+        vol.Optional(CONF_SCAN_APP_HTTP, default=True): cv.boolean,
     }
 )
 
@@ -124,7 +124,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     uuid = None
     show_channel_number = False
-    scan_app_http = False
+    scan_app_http = True
 
     # Is this a manual configuration?
     if config.get(CONF_HOST) is not None:
@@ -161,9 +161,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.warning("Cannot determine device")
         return
 
-    if (api_key is None or device_id is None) and scan_app_http == False:
-        scan_app_http = True
-        
     # Only add a device once, so discovered devices do not override manual
     # config.
     ip_addr = socket.gethostbyname(host)
