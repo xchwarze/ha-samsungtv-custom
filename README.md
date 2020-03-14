@@ -127,7 +127,7 @@ Edit it by adding the following lines:
     (boolean)(Optional)<br/>
     If the SmartThings API is enabled (by settings "api_key" and "device_id"), then the TV Channel Names will show as media titles, by setting this to True the TV Channel Number will also be attached to the end of the media title. (when applicable)
 
-    **scan_app_ws:**<br/>
+    **scan_app_http:**<br/>
     (boolean)(Optional)<br/>
     Allow you to disable the scan of running app polling port 8001 of the TV to have the refresh of the TV status and running App faster.<br/>
     If the SmartThings API is enabled (by settings "api_key" and "device_id"), then this option is false by default and the scan is diabled. You can enable it setting the value to true.<br/>
