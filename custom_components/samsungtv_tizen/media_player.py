@@ -488,6 +488,10 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def state(self):
         """Return the state of the device."""
+        
+        # It's assumed that after a sending a power off command, the command is accepted and
+        # for 20 seconds (defined in const POWER_OFF_DELAY) the state will be off regardless of the actual state. 
+        # This is to have a better feedback to the command in the UI 
         if self._power_off_in_progress():
             return STATE_OFF
 
