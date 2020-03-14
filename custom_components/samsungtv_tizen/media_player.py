@@ -69,7 +69,7 @@ CONF_UPDATE_METHOD = "update_method"
 CONF_UPDATE_CUSTOM_PING_URL = "update_custom_ping_url"
 CONF_SOURCE_LIST = "source_list"
 CONF_APP_LIST = "app_list"
-CONF_SCAN_APP_WS = "scan_app_ws"
+CONF_SCAN_APP_HTTP = "scan_app_http"
 
 KNOWN_DEVICES_KEY = "samsungtv_known_devices"
 MEDIA_TYPE_KEY = "send_key"
@@ -111,7 +111,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_API_KEY): cv.string,
         vol.Optional(CONF_SHOW_CHANNEL_NR, default=False): cv.boolean,
         vol.Optional(CONF_BROADCAST_ADDRESS): cv.string,
-        vol.Optional(CONF_SCAN_APP_WS, default=False): cv.boolean,
+        vol.Optional(CONF_SCAN_APP_HTTP, default=False): cv.boolean,
     }
 )
 
@@ -124,7 +124,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     uuid = None
     show_channel_number = False
-    scan_app_ws = False
+    scan_app_http = False
 
     # Is this a manual configuration?
     if config.get(CONF_HOST) is not None:
@@ -141,7 +141,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         api_key = config.get(CONF_API_KEY)
         device_id = config.get(CONF_DEVICE_ID)
         show_channel_number = config.get(CONF_SHOW_CHANNEL_NR)
-        scan_app_ws = config.get(CONF_SCAN_APP_WS)
+        scan_app_http = config.get(CONF_SCAN_APP_HTTP)
     elif discovery_info is not None:
         tv_name = discovery_info.get("name")
         model = discovery_info.get("model_name")
@@ -161,15 +161,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.warning("Cannot determine device")
         return
 
-    if (api_key is None or device_id is None) and scan_app_ws == False:
-        scan_app_ws = True
+    if (api_key is None or device_id is None) and scan_app_http == False:
+        scan_app_http = True
         
     # Only add a device once, so discovered devices do not override manual
     # config.
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_ws)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -178,7 +178,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerDevice):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_ws):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
@@ -192,12 +192,11 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._update_method = update_method
         self._update_custom_ping_url = update_custom_ping_url
         self._broadcast = broadcast
-        self._scan_app_ws = scan_app_ws
+        self._scan_app_http = scan_app_http
         
         self._source = None
         self._source_list = json.loads(source_list)
         self._running_app = None
-        #self._app_list = json.loads(app_list) if app_list is not None else None
         if app_list is not None:
            dlist = self._split_app_list(json.loads(app_list), "/")
            self._app_list = dlist["app"]
@@ -307,12 +306,11 @@ class SamsungTVDevice(MediaPlayerDevice):
         if self._app_list is not None:
 
             if hasattr(self, '_cloud_state') and self._cloud_channel_name != "":
-                #for attr, value in self._app_list.items():
                 for attr, value in self._app_list_ST.items():
                     if value == self._cloud_channel_name:
                         return attr
 
-            if self._scan_app_ws:
+            if self._scan_app_http:
                 for app in self._app_list:
 
                     r = None
@@ -350,7 +348,6 @@ class SamsungTVDevice(MediaPlayerDevice):
             except Exception:
                 pass
 
-        #self._app_list = clean_app_list
         self._app_list_ST = self._app_list = clean_app_list
         _LOGGER.debug("Gen installed app_list %s", clean_app_list)
 
@@ -358,6 +355,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Return the current input source."""
         if self._state != STATE_OFF:
 
+            # this throttle of 5 second occur only when we change the source from UI
+            # and it is used to give the the time to update the real status and provide correct feedback
+            # self._last_source_time is set on async_select_source method
             call_time = datetime.now()
             if self._last_source_time is not None:
                 difference = (call_time - self._last_source_time).total_seconds()
@@ -400,11 +400,6 @@ class SamsungTVDevice(MediaPlayerDevice):
     @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
     def update(self):
         """Update state of device."""
-        
-        #call_time = datetime.now()
-        #difference = (call_time - self._last_command_time).total_seconds()
-        #if difference < UPDATE_STATUS_DELAY:
-        #    return
         
         """Required to get source and media title"""
         if self._api_key and self._device_id:
@@ -691,8 +686,6 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     async def async_select_source(self, source):
         """Select input source."""
-        set_new_source = True
-        
         if source in self._source_list:
             source_key = self._source_list[ source ]
             if source_key.startswith("ST_"):
@@ -713,10 +706,8 @@ class SamsungTVDevice(MediaPlayerDevice):
             source_key = self._app_list[ source ]
             await self.hass.async_add_job(self.send_command, source_key, "run_app")
         else:
-            set_new_source = False
             _LOGGER.error("Unsupported source")
+            return
             
-        if set_new_source:
-            self._last_source_time = datetime.now()
-            self._source = source
-        
+        self._last_source_time = datetime.now()
+        self._source = source
