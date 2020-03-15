@@ -417,10 +417,10 @@ class SamsungTVDevice(MediaPlayerDevice):
             self._ping_device()
             """Still required to get source and media title"""
             if self._api_key and self._device_id:
-                self.hass.async_add_job(smartthings.device_update, self)
+                smartthings.device_update(self)
 
         if self._state == STATE_ON and not self._power_off_in_progress():
-            self.hass.async_add_job(self._get_running_app)
+            self._get_running_app()
             
         if self._state == STATE_OFF:
             self._end_of_power_off = None 
