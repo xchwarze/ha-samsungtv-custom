@@ -123,8 +123,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         hass.data[KNOWN_DEVICES_KEY] = known_devices
 
     uuid = None
-    show_channel_number = False
-    scan_app_http = True
 
     # Is this a manual configuration?
     if config.get(CONF_HOST) is not None:
