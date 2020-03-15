@@ -467,19 +467,25 @@ class SamsungTVDevice(MediaPlayerDevice):
             return None
 
         if self._api_key and self._device_id and hasattr(self, '_cloud_state'):
+
             if self._cloud_state == STATE_OFF:
                 self._state = STATE_OFF
                 return None
-            elif self._running_app == "TV/HDMI" and self._cloud_source in ["digitalTv", "TV"]:
-                if self._cloud_channel_name != "" and self._cloud_channel != "":
-                    if self._show_channel_number:
-                        return self._cloud_channel_name + " (" + self._cloud_channel + ")"
-                    else:
+            elif self._running_app == "TV/HDMI":
+                if self._cloud_source in ["digitalTv", "TV"]:
+                    if self._cloud_channel_name != "" and self._cloud_channel != "":
+                        if self._show_channel_number:
+                            return self._cloud_channel_name + " (" + self._cloud_channel + ")"
+                        else:
+                            return self._cloud_channel_name
+                    elif self._cloud_channel_name != "":
                         return self._cloud_channel_name
+                    elif self._cloud_channel != "":
+                        return self._cloud_channel
                 elif self._cloud_channel_name != "":
+                    # the channel name holds the running app ID
+                    # regardless of the self._cloud_source value
                     return self._cloud_channel_name
-                elif self._cloud_channel != "":
-                    return self._cloud_channel
 
         return self._get_source()
 
