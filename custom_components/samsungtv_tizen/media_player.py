@@ -350,9 +350,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Return the current input source."""
         if self._state != STATE_OFF:
 
-            # this throttle of 5 second occur only when we change the source from UI
-            # and it is used to give the the time to update the real status and provide correct feedback
-            # self._last_source_time is set on async_select_source method
+            # we throttle the method for 5 seconds when we change the source from the UI
+            # this is done to give the required time to update the real status and provide correct feedback
+            # self._last_source_time is set in async_select_source method
             call_time = datetime.now()
             if self._last_source_time is not None:
                 difference = (call_time - self._last_source_time).total_seconds()
@@ -487,9 +487,9 @@ class SamsungTVDevice(MediaPlayerDevice):
     def state(self):
         """Return the state of the device."""
         
-        # It's assumed that after a sending a power off command, the command is accepted and
-        # for 20 seconds (defined in const POWER_OFF_DELAY) the state will be off regardless of the actual state. 
-        # This is to have a better feedback to the command in the UI 
+        # Warning: we assume that after a sending a power off command, the command is successful
+        # so for 20 seconds (defined in POWER_OFF_DELAY) the state will be off regardless of the actual state. 
+        # This is to have better feedback to the command in the UI, but the logic might cause other issues in the future
         if self._power_off_in_progress():
             return STATE_OFF
 
