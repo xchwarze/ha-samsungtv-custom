@@ -106,7 +106,7 @@ Edit it by adding the following lines:
 
     **api_key:**<br/>
     (string)(Optional)<br/>
-    API Key for the SmartThings Cloud API, this is optional but adds better state handling on, off, channel name, hdmi source, and a few new keys: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc.<br/>
+    API Key for the SmartThings Cloud API, this is optional but adds better state handling on, off, channel name, hdmi source, and a few new keys: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc. (see more at [SmartThings Keys](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md#smartthings-keys))<br/>
     [How to get an API Key for SmartThings](./Smartthings.md)<br/>
     _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
     
@@ -175,7 +175,7 @@ service: media_player.play_media
   "media_content_id": "KEY_CODE",
 }
 ```
-**Note**: Change "KEY_CODEKEY" by desired key_code. (also works with key chaining and SmartThings keys: ST_TV, ST_HDMI1, ST_HDMI2, ST_HDMI3, etc.)
+**Note**: Change "KEY_CODEKEY" by desired key_code. (also works with key chaining and SmartThings keys: ST_TV, ST_HDMI1, ST_HDMI2, ST_HDMI3, etc. / see more at [SmartThings Keys](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md#smartthings-keys))
 
 Script example:
 ```
