@@ -11,6 +11,8 @@ An application normally has both a numerical ID and an alphanumerical ID associa
 
 Here are some known lists of app IDs: [List 1](https://github.com/tavicu/homebridge-samsung-tizen/issues/26#issuecomment-447424879), [List 2](https://github.com/Ape/samsungctl/issues/75#issuecomment-404941201)
 
+(Another way of finding the alphanumerical ID is by enabling the [SmartThings API](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md) and running an app on the TV, this will show the alphanumerical ID as `media_title` in the component)
+
 Here are 3 examples values for `app_list`:
 - `'{"Netflix": "11101200001", "Prime Video": "3201512006785", "Spotify": "3201606009684"}'`
 - `'{"Netflix": "org.tizen.netflix-app", "Prime Video": "org.tizen.ignition", "Spotify": "3201606009684"}'`
