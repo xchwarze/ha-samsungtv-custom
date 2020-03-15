@@ -29,7 +29,7 @@ media_player:
 ---------------
 
 - Better states for running apps (read [app_list guide](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/App_list.md) for more information)
-- New keys available (read more below about SmartThings Keys)
+- New keys available (read more below about [SmartThings Keys](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md#smartthings-keys))
 - Shows TV channel names
 - Shows accurate states for HDMI or TV input sources
 
