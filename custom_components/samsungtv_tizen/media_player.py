@@ -392,6 +392,18 @@ class SamsungTVDevice(MediaPlayerDevice):
             
         return self._source
 
+    def _smartthings_keys(self, source_key):
+        if source_key.startswith("ST_HDMI"):
+            smartthings.send_command(self, source_key.replace("ST_", ""), "selectsource")
+        elif source_key == "ST_TV":
+            smartthings.send_command(self, "digitalTv", "selectsource")
+        elif source_key.startswith("ST_CH"):
+            smartthings.send_command(self, source_key.replace("ST_CH", ""), "selectchannel")
+        elif source_key == "ST_CHUP":
+            smartthings.send_command(self, "up", "stepchannel")
+        elif source_key == "ST_CHDOWN":
+            smartthings.send_command(self, "down", "stepchannel")
+    
     @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
     def update(self):
         """Update state of device."""
@@ -652,10 +664,7 @@ class SamsungTVDevice(MediaPlayerDevice):
             source_key = media_id
 
             if source_key.startswith("ST_"):
-                if source_key.startswith("ST_HDMI"):
-                    smartthings.send_command(self, source_key.replace("ST_", ""), "selectsource")
-                elif source_key == "ST_TV":
-                    smartthings.send_command(self, "digitalTv", "selectsource")
+                await self.hass.async_add_job(self._smartthings_keys, source_key)
             elif "+" in source_key:
                 all_source_keys = source_key.split("+")
                 for this_key in all_source_keys:
@@ -694,10 +703,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         if source in self._source_list:
             source_key = self._source_list[ source ]
             if source_key.startswith("ST_"):
-                if source_key.startswith("ST_HDMI"):
-                    smartthings.send_command(self, source_key.replace("ST_", ""), "selectsource")
-                elif source_key == "ST_TV":
-                    smartthings.send_command(self, "digitalTv", "selectsource")
+                await self.hass.async_add_job(self._smartthings_keys, source_key)
             elif "+" in source_key:
                 all_source_keys = source_key.split("+")
                 for this_key in all_source_keys:
