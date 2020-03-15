@@ -30,5 +30,5 @@ To get the running app from the TV, two different ways are used:
 - one works only with numerical IDs by doing HTTP polling on the TV (1 request for each app in `app_list`), this is a lengthy task that should be avoided if possible (this can be completely avoided by setting `scan_app_http` to `False` in your component's config)
 - another works only with the alphanumerical IDs by getting the running app from the SmartThings API (requires SmartThings API enabled in your component's config)
 
-Note: There is one rare case, for a few apps (like "Prime Video") where the numerical ID will work to start the app, but not to identify the running app, while it's alphanumerical ID will work to get the running app but not run the app. It is for this case that we also allow setting both numerical and alphanumerical IDs at the same time (separated by "/") which will allow this component to correctly handle this rare case too.
+**Note:** There is one rare case, for a few apps (like "Prime Video") where the numerical ID will work to start the app, but not to identify the running app, while it's alphanumerical ID will work to get the running app but not run the app. It is for this case that we also allow setting both numerical and alphanumerical IDs at the same time (separated by "/") which will allow this component to correctly handle this rare case too.
 
