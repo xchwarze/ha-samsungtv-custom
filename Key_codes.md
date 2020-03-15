@@ -2,7 +2,7 @@
 
 ***Key Codes***
 ---------------
-If SmartThings API was enabled by setting `api_key` and `device_id`, then these codes are also supported: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc.
+If [SmartThings API](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md) was enabled by setting `api_key` and `device_id`, then these codes are also supported: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc. (see the [entire list of SmartThings keys](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md#smartthings-keys))
 
 The list of accepted keys may vary depending on the TV model, but the following list has some common key codes and their descriptions.
 
