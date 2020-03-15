@@ -663,15 +663,18 @@ class SamsungTVDevice(MediaPlayerDevice):
 
             source_key = media_id
 
-            if source_key.startswith("ST_"):
-                await self.hass.async_add_job(self._smartthings_keys, source_key)
-            elif "+" in source_key:
+            if "+" in source_key:
                 all_source_keys = source_key.split("+")
                 for this_key in all_source_keys:
                     if this_key.isdigit():
                         time.sleep(int(this_key)/1000)
                     else:
-                        await self.hass.async_add_job(self.send_command, this_key)
+                        if this_key.startswith("ST_"):
+                            await self.hass.async_add_job(self._smartthings_keys, this_key)
+                        else:
+                            await self.hass.async_add_job(self.send_command, this_key)
+            elif source_key.startswith("ST_"):
+                await self.hass.async_add_job(self._smartthings_keys, source_key)
             else:
                 await self.hass.async_add_job(self.send_command, source_key)
 
@@ -702,15 +705,18 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Select input source."""
         if source in self._source_list:
             source_key = self._source_list[ source ]
-            if source_key.startswith("ST_"):
-                await self.hass.async_add_job(self._smartthings_keys, source_key)
-            elif "+" in source_key:
+            if "+" in source_key:
                 all_source_keys = source_key.split("+")
                 for this_key in all_source_keys:
                     if this_key.isdigit():
                         time.sleep(int(this_key)/1000)
                     else:
-                        await self.hass.async_add_job(self.send_command, this_key)
+                        if this_key.startswith("ST_"):
+                            await self.hass.async_add_job(self._smartthings_keys, this_key)
+                        else:
+                            await self.hass.async_add_job(self.send_command, this_key)
+            elif source_key.startswith("ST_"):
+                await self.hass.async_add_job(self._smartthings_keys, source_key)
             else:
                 await self.hass.async_add_job(self.send_command, self._source_list[ source ])
         elif source in self._app_list:
