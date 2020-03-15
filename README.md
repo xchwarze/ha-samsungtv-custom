@@ -37,7 +37,7 @@ Install via HACS.
 Install it as you would do with any homeassistant custom component:
 
 1. Download `custom_components` folder.
-2. Copy the `samsungtv_tizen` direcotry within the `custom_components` directory of your homeassistant installation. The `custom_components` directory resides within your homeassistant configuration directory.
+2. Copy the `samsungtv_tizen` directory within the `custom_components` directory of your homeassistant installation. The `custom_components` directory resides within your homeassistant configuration directory.
 **Note**: if the custom_components directory does not exist, you need to create it.
 After a correct installation, your configuration directory should look like the following.
     ```
