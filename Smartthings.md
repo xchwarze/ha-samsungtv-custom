@@ -23,3 +23,38 @@ media_player:
     device_id: "YOUR DEVICE ID"
     ...
 ```
+
+
+***Benefits of Enabling SmartThings***
+---------------
+
+- Better states for running apps (read [app_list guide](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/App_list.md) for more information)
+- New keys available (read more below about SmartThings Keys)
+- Shows TV channel names
+- Shows accurate states for HDMI or TV input sources
+
+
+***SmartThings Keys***
+---------------
+
+*Input Keys*
+____________
+Key|Description
+---|-----------
+ST_TV|TV
+ST_HDMI1|HDMI1
+ST_HDMI2|HDMI2
+ST_HDMI3|HDMI3
+ST_HDMI4|HDMI4
+...
+
+*Channel Keys*
+______________
+Key|Description
+---|-----------
+KEY_CHUP|ChannelUp
+KEY_CHDOWN|ChannelDown
+KEY_CH1|Channel1
+KEY_CH2|Channel2
+KEY_CH3|Channel3
+...
