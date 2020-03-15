@@ -303,7 +303,8 @@ class SamsungTVDevice(MediaPlayerDevice):
             if hasattr(self, '_cloud_state') and self._cloud_channel_name != "":
                 for attr, value in self._app_list_ST.items():
                     if value == self._cloud_channel_name:
-                        return attr
+                        self._running_app = attr
+                        return
 
             if self._scan_app_http:
                 for app in self._app_list:
@@ -321,9 +322,10 @@ class SamsungTVDevice(MediaPlayerDevice):
                             root = json.loads(data.encode('UTF-8'))
                             if 'visible' in root:
                                 if root['visible']:
-                                    return app
+                                    self._running_app = app
+                                    return
 
-        return 'TV/HDMI'
+        self._running_app = 'TV/HDMI'
 
     def _gen_installed_app_list(self):
 
@@ -408,13 +410,17 @@ class SamsungTVDevice(MediaPlayerDevice):
     def update(self):
         """Update state of device."""
         
-        """Required to get source and media title"""
-        if self._api_key and self._device_id:
+        if self._update_method == "smartthings" and self._api_key and self._device_id:
             smartthings.device_update(self)
-        self._ping_device()
+            self._ping_device()
+        else:
+            self._ping_device()
+            """Still required to get source and media title"""
+            if self._api_key and self._device_id:
+                self.hass.async_add_job(smartthings.device_update, self)
 
         if self._state == STATE_ON and not self._power_off_in_progress():
-            self._running_app = self._get_running_app()
+            self.hass.async_add_job(self._get_running_app)
             
         if self._state == STATE_OFF:
             self._end_of_power_off = None 
