@@ -73,12 +73,6 @@ Edit it by adding the following lines:
 
     ### Custom configuration variables
 
-    **broadcast_address:**<br/>
-    (string)(Optional)<br/>
-    The ip address of the host to send the magic packet (for wakeonlan) to if the "mac" property is also set.<br/>
-    Default value: "255.255.255.255"<br/>
-    Example value: "192.168.1.255"<br/>
-
     **update_method:**<br/>
     (string)(Optional)<br/>
     This change the ping method used for state update. Values: "ping", "websockets" and "smartthings"<br/>
@@ -131,6 +125,13 @@ Edit it by adding the following lines:
     This option is `True` by default. In some cases (if numerical IDs are used when setting `app_list`) HTTP polling will be used (1 request per app) to get the running app.<br/>
     This is a lengthy task that some may want to disable, you can do so by setting this option to `False`.<br/>
     For more information about how we get the running app, read the [app_list guide](./App_list.md).<br/>
+
+    **broadcast_address:**<br/>
+    (string)(Optional)<br/>
+    **Do not set this option if you do not know what it does, it can break turning your TV on.**<br/>
+    The ip address of the host to send the magic packet (for wakeonlan) to if the "mac" property is also set.<br/>
+    Default value: "255.255.255.255"<br/>
+    Example value: "192.168.1.255"<br/>
 
 2. Reboot Home Assistant
 3. Congrats! You're all set!
