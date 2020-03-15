@@ -1,6 +1,6 @@
 """Support for interface with an Samsung TV."""
 import asyncio
-from datetime import timedelta
+from datetime import timedelta, datetime
 import logging
 import socket
 import json
@@ -57,6 +57,8 @@ from homeassistant.util import dt as dt_util
 CONF_SHOW_CHANNEL_NR = "show_channel_number"
 
 _LOGGER = logging.getLogger(__name__)
+SCAN_INTERVAL = timedelta(seconds=15)
+
 
 DEFAULT_NAME = "Samsung TV Remote"
 DEFAULT_PORT = 8001
@@ -67,6 +69,7 @@ CONF_UPDATE_METHOD = "update_method"
 CONF_UPDATE_CUSTOM_PING_URL = "update_custom_ping_url"
 CONF_SOURCE_LIST = "source_list"
 CONF_APP_LIST = "app_list"
+CONF_SCAN_APP_HTTP = "scan_app_http"
 
 KNOWN_DEVICES_KEY = "samsungtv_known_devices"
 MEDIA_TYPE_KEY = "send_key"
@@ -75,6 +78,10 @@ KEY_PRESS_TIMEOUT = 0.5
 UPDATE_PING_TIMEOUT = 1
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=1)
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
+UPDATE_STATUS_DELAY = 1
+UPDATE_SOURCE_INTERVAL = 5
+WS_CONN_TIMEOUT = 10
+POWER_OFF_DELAY = timedelta(seconds=20)
 
 SUPPORT_SAMSUNGTV = (
     SUPPORT_PAUSE
@@ -104,6 +111,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_API_KEY): cv.string,
         vol.Optional(CONF_SHOW_CHANNEL_NR, default=False): cv.boolean,
         vol.Optional(CONF_BROADCAST_ADDRESS): cv.string,
+        vol.Optional(CONF_SCAN_APP_HTTP, default=True): cv.boolean,
     }
 )
 
@@ -115,6 +123,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         hass.data[KNOWN_DEVICES_KEY] = known_devices
 
     uuid = None
+    show_channel_number = False
+    scan_app_http = True
 
     # Is this a manual configuration?
     if config.get(CONF_HOST) is not None:
@@ -131,6 +141,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         api_key = config.get(CONF_API_KEY)
         device_id = config.get(CONF_DEVICE_ID)
         show_channel_number = config.get(CONF_SHOW_CHANNEL_NR)
+        scan_app_http = config.get(CONF_SCAN_APP_HTTP)
     elif discovery_info is not None:
         tv_name = discovery_info.get("name")
         model = discovery_info.get("model_name")
@@ -155,7 +166,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -164,7 +175,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerDevice):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
@@ -178,10 +189,19 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._update_method = update_method
         self._update_custom_ping_url = update_custom_ping_url
         self._broadcast = broadcast
+        self._scan_app_http = scan_app_http
+        
         self._source = None
         self._source_list = json.loads(source_list)
         self._running_app = None
-        self._app_list = json.loads(app_list) if app_list is not None else None
+        if app_list is not None:
+           dlist = self._split_app_list(json.loads(app_list), "/")
+           self._app_list = dlist["app"]
+           self._app_list_ST = dlist["appST"]
+        else:
+           self._app_list = None
+           self._app_list_ST = None
+
         self._uuid = uuid
         self._is_ws_connection = True if port in (8001, 8002) else False
         # Assume that the TV is not muted and volume is 0
@@ -194,6 +214,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         # sending the next command to avoid turning the TV back ON).
         self._end_of_power_off = None
         self._token_file = None
+        
+        self._last_command_time = datetime.now()
+        self._last_source_time = None
 
         # Generate token file only for WS + SSL + Token connection
         if port == 8002:
@@ -212,6 +235,17 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._upnp = upnp(
             host=host
         )
+
+    def _split_app_list(self, app_list, sep = "/"):
+        retval = {"app": {}, "appST": {}}
+        
+        for attr, value in app_list.items():
+            value_split = value.split(sep, 1)
+            idx = 1 if len(value_split) > 1 else 0
+            retval["app"].update({attr: value_split[0]})
+            retval["appST"].update({attr: value_split[idx]})
+            
+        return retval
 
     def _gen_token_file(self):
         self._token_file = os.path.dirname(os.path.realpath(__file__)) + '/token-' + self._host + '.txt'
@@ -269,26 +303,27 @@ class SamsungTVDevice(MediaPlayerDevice):
         if self._app_list is not None:
 
             if hasattr(self, '_cloud_state') and self._cloud_channel_name != "":
-                for attr, value in self._app_list.items():
+                for attr, value in self._app_list_ST.items():
                     if value == self._cloud_channel_name:
                         return attr
 
-            for app in self._app_list:
+            if self._scan_app_http:
+                for app in self._app_list:
 
-                r = None
+                    r = None
 
-                try:
-                    r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self._host, value=self._app_list[app]), timeout=0.5)
-                except requests.exceptions.RequestException as e:
-                    pass
+                    try:
+                        r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self._host, value=self._app_list[app]), timeout=0.5)
+                    except requests.exceptions.RequestException as e:
+                        pass
 
-                if r is not None:
-                    data = r.text
-                    if data is not None:
-                        root = json.loads(data.encode('UTF-8'))
-                        if 'visible' in root:
-                            if root['visible']:
-                                return app
+                    if r is not None:
+                        data = r.text
+                        if data is not None:
+                            root = json.loads(data.encode('UTF-8'))
+                            if 'visible' in root:
+                                if root['visible']:
+                                    return app
 
         return 'TV/HDMI'
 
@@ -297,6 +332,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         if self._state == STATE_OFF:
             _LOGGER.info("Samsung TV is OFF, _gen_installed_app_list not executed")
             self._app_list = {}
+            self._app_list_ST = {}
 
         app_list = self._ws.app_list()
 
@@ -309,11 +345,23 @@ class SamsungTVDevice(MediaPlayerDevice):
             except Exception:
                 pass
 
-        self._app_list = clean_app_list
+        self._app_list_ST = self._app_list = clean_app_list
         _LOGGER.debug("Gen installed app_list %s", clean_app_list)
 
     def _get_source(self):
+        """Return the current input source."""
         if self._state != STATE_OFF:
+
+            # this throttle of 5 second occur only when we change the source from UI
+            # and it is used to give the the time to update the real status and provide correct feedback
+            # self._last_source_time is set on async_select_source method
+            call_time = datetime.now()
+            if self._last_source_time is not None:
+                difference = (call_time - self._last_source_time).total_seconds()
+                if difference < UPDATE_SOURCE_INTERVAL: #update source every 5 seconds
+                    return self._source
+            
+            self._last_source_time = call_time
             if hasattr(self, '_cloud_state'):
                 if self._cloud_state == STATE_OFF:
                     self._source = None
@@ -342,25 +390,34 @@ class SamsungTVDevice(MediaPlayerDevice):
                 self._source = self._running_app
         else:
             self._source = None
+            self._last_source_time = None
+            
         return self._source
 
     @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_FORCED_SCANS)
     def update(self):
         """Update state of device."""
-        if self._update_method == "smartthings" and self._api_key and self._device_id:
+        
+        """Required to get source and media title"""
+        if self._api_key and self._device_id:
             smartthings.device_update(self)
-            self._ping_device()
-        else:
-            self._ping_device()
-            """Still required to get source and media title"""
-            if self._api_key and self._device_id:
-                smartthings.device_update(self)
+        self._ping_device()
 
-        if self._state == STATE_ON:
+        if self._state == STATE_ON and not self._power_off_in_progress():
             self._running_app = self._get_running_app()
+            
+        if self._state == STATE_OFF:
+            self._end_of_power_off = None 
 
     def send_command(self, payload, command_type = "send_key", retry_count = 1, key_press_delay=None):
         """Send a key to the tv and handles exceptions."""
+
+        call_time = datetime.now()
+        difference = (call_time - self._last_command_time).total_seconds()
+        if difference > WS_CONN_TIMEOUT: #always close connection after WS_CONN_TIMEOUT (10 seconds)
+            self._ws.close()
+            
+        self._last_command_time = call_time
 
         try:
             # recreate connection if connection was dead
@@ -431,6 +488,13 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def state(self):
         """Return the state of the device."""
+        
+        # It's assumed that after a sending a power off command, the command is accepted and
+        # for 20 seconds (defined in const POWER_OFF_DELAY) the state will be off regardless of the actual state. 
+        # This is to have a better feedback to the command in the UI 
+        if self._power_off_in_progress():
+            return STATE_OFF
+
         return self._state
 
     @property
@@ -444,6 +508,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         """List of available input sources."""
         if self._app_list is None:
             self._gen_installed_app_list()
+
+        if self._power_off_in_progress() or self._state == STATE_OFF:
+            return None
 
         source_list = []
         source_list.extend(list(self._source_list))
@@ -475,36 +542,39 @@ class SamsungTVDevice(MediaPlayerDevice):
     def turn_on(self):
         """Turn the media player on."""
         if self._power_off_in_progress():
+            self._end_of_power_off = None 
             if self._is_ws_connection:
                 self.send_command("KEY_POWER")
             else:
                 self.send_command("KEY_POWEROFF")
-            return
 
-        if self._mac:
-            if self._broadcast:
-                wakeonlan.send_magic_packet(self._mac, ip_address=self._broadcast)
+        elif self._state == STATE_OFF:
+            if self._mac:
+                if self._broadcast:
+                    wakeonlan.send_magic_packet(self._mac, ip_address=self._broadcast)
+                else:
+                    wakeonlan.send_magic_packet(self._mac)
+                time.sleep(2)
+                self._ping_device()
             else:
-                wakeonlan.send_magic_packet(self._mac)
-            time.sleep(2)
-            self._ping_device()
-        else:
-            self.send_command("KEY_POWERON")
+                self.send_command("KEY_POWERON")
 
     def turn_off(self):
         """Turn off media player."""
-        self._end_of_power_off = dt_util.utcnow() + timedelta(seconds=15)
+        if (not self._power_off_in_progress()) and self._state != STATE_OFF:
+        
+            self._end_of_power_off = dt_util.utcnow() + POWER_OFF_DELAY
 
-        if self._is_ws_connection:
-            self.send_command("KEY_POWER")
-        else:
-            self.send_command("KEY_POWEROFF")
+            if self._is_ws_connection:
+                self.send_command("KEY_POWER")
+            else:
+                self.send_command("KEY_POWEROFF")
 
-        # Force closing of remote session to provide instant UI feedback
-        try:
-            self._ws.close()
-        except OSError:
-            _LOGGER.debug("Could not establish connection.")
+            # Force closing of remote session to provide instant UI feedback
+            try:
+                self._ws.close()
+            except OSError:
+                _LOGGER.debug("Could not establish connection.")
 
     def volume_up(self):
         """Volume up the media player."""
@@ -638,3 +708,7 @@ class SamsungTVDevice(MediaPlayerDevice):
             await self.hass.async_add_job(self.send_command, source_key, "run_app")
         else:
             _LOGGER.error("Unsupported source")
+            return
+            
+        self._last_source_time = datetime.now()
+        self._source = source
