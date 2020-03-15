@@ -52,9 +52,9 @@ ST_HDMI4|HDMI4
 ______________
 Key|Description
 ---|-----------
-KEY_CHUP|ChannelUp
-KEY_CHDOWN|ChannelDown
-KEY_CH1|Channel1
-KEY_CH2|Channel2
-KEY_CH3|Channel3
+ST_CHUP|ChannelUp
+ST_CHDOWN|ChannelDown
+ST_CH1|Channel1
+ST_CH2|Channel2
+ST_CH3|Channel3
 ...
