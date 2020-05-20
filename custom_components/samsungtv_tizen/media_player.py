@@ -75,7 +75,7 @@ KNOWN_DEVICES_KEY = "samsungtv_known_devices"
 MEDIA_TYPE_KEY = "send_key"
 MEDIA_TYPE_BROWSER = "browser"
 KEY_PRESS_TIMEOUT = 0.5
-UPDATE_PING_TIMEOUT = 1.5
+UPDATE_PING_TIMEOUT = 1.0
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=1)
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
 UPDATE_STATUS_DELAY = 1
@@ -602,11 +602,15 @@ class SamsungTVDevice(MediaPlayerDevice):
     def volume_up(self):
         """Volume up the media player."""
         self._volume = self._volume + 0.1
+        if self._volume>1:
+            self._volume = 1
         self.send_command("KEY_VOLUP")
 
     def volume_down(self):
         """Volume down media player."""
         self._volume = self._volume - 0.1
+        if self._volume<0:
+            self._volume = 0
         self.send_command("KEY_VOLDOWN")
 
     def mute_volume(self, mute):
