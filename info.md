@@ -101,6 +101,8 @@ Edit it by adding the following lines:
 
 ### Known Supported Voice Commands
 
+**Google Home verified commands**
+
 * Turn on `SAMSUNG-TV-NAME-HERE` (for some older TVs this only works if the TV is connected by LAN cable to the Network)
 * Turn off `SAMSUNG-TV-NAME-HERE`
 * Volume up on `SAMSUNG-TV-NAME-HERE` (increases volume by 1)
@@ -110,6 +112,10 @@ Edit it by adding the following lines:
 * Change input source to `DEVICE-NAME-HERE` on `SAMSUNG-TV-NAME-HERE` (only works if `DEVICE-NAME-HERE` is a whitelisted word from [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes) under "Mode Settings")
 
 (if you find more supported voice commands, please create an issue so I can add them here)
+
+**Alexa support**
+
+Read our [Alexa Guide](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Alexa_guide.md)
 
 ### Cast to TV
 
