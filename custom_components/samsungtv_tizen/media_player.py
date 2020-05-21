@@ -18,8 +18,7 @@ from .smartthings import smartthingstv as smartthings
 from .upnp import upnp
 
 from homeassistant import util
-from homeassistant.components.media_player import PLATFORM_SCHEMA, DEVICE_CLASS_TV, MediaPlayerEntity
-
+from homeassistant.components.media_player import (MediaPlayerEntity, PLATFORM_SCHEMA, DEVICE_CLASS_TV, )
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_CHANNEL,
     SUPPORT_NEXT_TRACK,
@@ -278,11 +277,11 @@ class SamsungTVDevice(MediaPlayerEntity):
                     ping_url,
                     timeout=UPDATE_PING_TIMEOUT
                 )
+                self._state = STATE_ON
                 self._muted = self._upnp.get_mute()
                 self._volume = int(self._upnp.get_volume()) / 100
                 if self._app_list is None:
                     self._gen_installed_app_list()
-                self._state = STATE_ON
             except:
                 self._state = STATE_OFF
         # WS ping
@@ -296,7 +295,6 @@ class SamsungTVDevice(MediaPlayerEntity):
 
     def _get_running_app(self):
         if self._app_list is not None:
-
             if hasattr(self, '_cloud_state') and self._cloud_channel_name != "":
                 for attr, value in self._app_list_ST.items():
                     if value == self._cloud_channel_name:
@@ -305,14 +303,11 @@ class SamsungTVDevice(MediaPlayerEntity):
 
             if self._scan_app_http:
                 for app in self._app_list:
-
                     r = None
-
                     try:
                         r = requests.get('http://{host}:8001/api/v2/applications/{value}'.format(host=self._host, value=self._app_list[app]), timeout=0.5)
                     except requests.exceptions.RequestException as e:
                         pass
-                  
                     if r is not None:
                         data = r.text
                         if data is not None:
@@ -325,18 +320,21 @@ class SamsungTVDevice(MediaPlayerEntity):
 
 
     def _gen_installed_app_list(self):
-
         if self._app_list is not None:
-            _LOGGER.debug("Manual set applist or already got, _gen_installed_app_list not executed")
+            _LOGGER.debug("SamsungTV %s, Manual set applist or already got, _gen_installed_app_list not executed", self._name)
             return
 
+        _LOGGER.debug("Samsung TV %, Self Applist %s",self._app_list)
         if self._state == STATE_OFF or self._state == None:
-            _LOGGER.debug("Samsung TV is OFF / No defined State, _gen_installed_app_list not executed....")
+            _LOGGER.debug("Samsung TV %s, is OFF, _gen_installed_app_list not executed...%s",self._name)
             return 
         
-        _LOGGER.debug("Samsung TV , _gen_installed_app_list executed......")
-        app_list = self._ws.app_list()
-
+        _LOGGER.debug("Samsung TV %s, _gen_installed_app_list executed......",self._name)
+        try:
+            app_list = self._ws.app_list()
+        except:
+            _LOGGER.debug("Samsung TV %s, _gen_installed_app_list Failed!!!......",self._name)
+            return
         # app_list is a list of dict
         clean_app_list = {}
         for i in range(len(app_list)):
@@ -577,6 +575,8 @@ class SamsungTVDevice(MediaPlayerEntity):
                 
             else:
                 self.send_command("KEY_POWERON")
+        #Assume optomistic ON
+        self._state = STATE_ON
 
 
     def turn_off(self):
@@ -595,6 +595,8 @@ class SamsungTVDevice(MediaPlayerEntity):
                 self._ws.close()
             except OSError:
                 _LOGGER.debug("Could not establish connection.")
+        #Assume optomistic ON
+        self._state = STATE_OFF
 
     def volume_up(self):
         """Volume up the media player."""
