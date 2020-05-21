@@ -18,11 +18,8 @@ from .smartthings import smartthingstv as smartthings
 from .upnp import upnp
 
 from homeassistant import util
-from homeassistant.components.media_player import (
-    MediaPlayerDevice,
-    PLATFORM_SCHEMA,
-    DEVICE_CLASS_TV,
-)
+from homeassistant.components.media_player import PLATFORM_SCHEMA, DEVICE_CLASS_TV, MediaPlayerEntity
+
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_CHANNEL,
     SUPPORT_NEXT_TRACK,
@@ -170,7 +167,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
 
 
-class SamsungTVDevice(MediaPlayerDevice):
+class SamsungTVDevice(MediaPlayerEntity):
     """Representation of a Samsung TV."""
 
     def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http):
