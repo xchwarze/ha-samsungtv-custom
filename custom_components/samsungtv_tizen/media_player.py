@@ -18,7 +18,17 @@ from .smartthings import smartthingstv as smartthings
 from .upnp import upnp
 
 from homeassistant import util
-from homeassistant.components.media_player import (MediaPlayerEntity, PLATFORM_SCHEMA, DEVICE_CLASS_TV, )
+try:
+    from homeassistant.components.media_player import MediaPlayerEntity, PLATFORM_SCHEMA, DEVICE_CLASS_TV
+except ImportError:
+    from homeassistant.components.media_player import MediaPlayerDevice as MediaPlayerEntity, PLATFORM_SCHEMA, DEVICE_CLASS_TV
+
+#from homeassistant.components.media_player import (
+#    MediaPlayerDevice,
+#    PLATFORM_SCHEMA,
+#    DEVICE_CLASS_TV,
+#)
+
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_CHANNEL,
     SUPPORT_NEXT_TRACK,
