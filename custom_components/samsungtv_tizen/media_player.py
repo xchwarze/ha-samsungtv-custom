@@ -62,7 +62,7 @@ CONF_SHOW_CHANNEL_NR = "show_channel_number"
 DEFAULT_NAME = "Samsung TV Remote"
 DEFAULT_PORT = 8001
 DEFAULT_TIMEOUT = 3
-DEFAULT_UPDATE_METHOD = "websockets" # ping
+DEFAULT_UPDATE_METHOD = "ping"
 DEFAULT_SOURCE_LIST = '{"TV": "KEY_TV", "HDMI": "KEY_HDMI"}'
 CONF_UPDATE_METHOD = "update_method"
 CONF_UPDATE_CUSTOM_PING_URL = "update_custom_ping_url"
@@ -592,8 +592,8 @@ class SamsungTVDevice(MediaPlayerEntity):
                 self.schedule_update_ha_state(True)
             else:
                 self.send_command("KEY_POWERON")
-#        #Assume optomistic ON
-#        self._state = STATE_ON
+        #Assume optomistic ON
+        self._state = STATE_ON
 
 
     def turn_off(self):
@@ -613,8 +613,8 @@ class SamsungTVDevice(MediaPlayerEntity):
         if self._auto_gen_installed_app_list == True:
            self._app_list = None
            self._app_list_ST = None
- #       #Assume optomistic OFF
- #       self._state = STATE_OFF
+        #Assume optomistic OFF
+        self._state = STATE_OFF
 
 
 
