@@ -379,7 +379,7 @@ class SamsungTVDevice(MediaPlayerEntity):
                 else:
                     if self._running_app == "TV/HDMI":
                         cloud_key = ""
-                        if self._cloud_source in ["digitalTv", "TV"]:
+                        if self._cloud_source in ["DigitalTv", "digitalTv", "TV"]:
                             cloud_key = "ST_TV"
                         else:
                             cloud_key = "ST_" + self._cloud_source
@@ -488,7 +488,7 @@ class SamsungTVDevice(MediaPlayerEntity):
                 self._state = STATE_OFF
                 return None
             elif self._running_app == "TV/HDMI":
-                if self._cloud_source in ["digitalTv", "TV"]:
+                if self._cloud_source in ["DigitalTv", "digitalTv", "TV"]:
                     if self._cloud_channel_name != "" and self._cloud_channel != "":
                         if self._show_channel_number:
                             return self._cloud_channel_name + " (" + self._cloud_channel + ")"
@@ -655,12 +655,19 @@ class SamsungTVDevice(MediaPlayerEntity):
 
     def media_next_track(self):
         """Send next track command."""
-        self.send_command("KEY_FF")
+        if self.source == "TV":
+            self.send_command("KEY_CHUP")
+        else:
+            self.send_command("KEY_FF")
 
 
     def media_previous_track(self):
         """Send the previous track command."""
-        self.send_command("KEY_REWIND")
+        if self.source == "TV":
+            self.send_command("KEY_CHDOWN")
+        else:
+            self.send_command("KEY_REWIND")
+
 
 
     async def async_play_media(self, media_type, media_id, **kwargs):
