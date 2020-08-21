@@ -214,7 +214,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
         # WS ping
         else:
-            self.send_command("KEY", 1, 0.5)
+            self.send_command("KEY", 1, 0)
 
     def _gen_installed_app_list(self):
         if self._state == STATE_OFF:
@@ -261,7 +261,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                             payload = "KEY_HDMI"
                             times = 2
 
-                        self._remote.send_key(payload, times, 2)
+                        self._remote.send_key(payload, times, 1.5)
 
                     break
                 except (
