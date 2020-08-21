@@ -55,7 +55,7 @@ CONF_APP_LIST = "app_list"
 
 KNOWN_DEVICES_KEY = "samsungtv_known_devices"
 MEDIA_TYPE_KEY = "send_key"
-KEY_PRESS_TIMEOUT = 0.3
+KEY_PRESS_TIMEOUT = 0.5
 UPDATE_PING_TIMEOUT = 1
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(seconds=1)
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
@@ -261,7 +261,7 @@ class SamsungTVDevice(MediaPlayerDevice):
                             payload = "KEY_HDMI"
                             times = 2
 
-                        self._remote.send_key(payload, times, 1)
+                        self._remote.send_key(payload, times, 2)
 
                     break
                 except (
