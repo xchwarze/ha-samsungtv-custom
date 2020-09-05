@@ -70,6 +70,5 @@ ST_VOL1|Volume1
 ST_VOL2|Volume2
 ST_VOL3|Volume3
 ...
-
-(maximum volume is 100)
+ST_VOL100|Volume100
 
