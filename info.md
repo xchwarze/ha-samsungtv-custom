@@ -14,6 +14,8 @@ This is a custom component to allow control of SamsungTV devices in [HomeAssista
 * Extended volume control
 * Ability to customize source list at media player dropdown list including TV, HDMI sources, apps and specific tv channels
 * Cast video URLs to Samsung TV
+* Open browser pages on a Samsung TV
+* Supports Samsung Frame TVs
 * Connect to SmartThings Cloud API for additional features: see TV channel names, see which HDMI source is selected, more key codes to change input source
 
 
