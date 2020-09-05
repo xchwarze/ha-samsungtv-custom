@@ -811,15 +811,15 @@ class SamsungTVDevice(MediaPlayerEntity):
             except vol.Invalid:
                 _LOGGER.error('Media ID must be an url (ex: "http://"')
                 return
-            self._upnp.set_current_media(media_id)
+            await self.hass.async_add_job(self._upnp.set_current_media, media_id)
             self._playing = True
         # Trying to make stream component work on TV
         elif media_type == "application/vnd.apple.mpegurl":
-            self._upnp.set_current_media(media_id)
+            await self.hass.async_add_job(self._upnp.set_current_media, media_id)
             self._playing = True
         elif media_type == MEDIA_TYPE_BROWSER:
             try:
-                self._ws.open_browser(media_id)
+                await self.hass.async_add_job(self._ws.open_browser, media_id)
             except (ConnectionResetError, AttributeError, BrokenPipeError,websocket._exceptions.WebSocketTimeoutException):
                 self._ws.close()
         else:
