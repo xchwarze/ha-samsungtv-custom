@@ -81,6 +81,7 @@ SCAN_INTERVAL = timedelta(seconds=15)
 MIN_TIME_BETWEEN_FORCED_SCANS = timedelta(milliseconds=100)
 MIN_TIME_BETWEEN_SCANS = SCAN_INTERVAL
 
+KEYHOLD_MAX_DELAY = 5.0
 KEY_PRESS_TIMEOUT = 0.5
 UPDATE_PING_TIMEOUT = 1.0
 UPDATE_STATUS_DELAY = 1
@@ -447,7 +448,7 @@ class SamsungTVDevice(MediaPlayerEntity):
             smartthings.send_command(self, "down", "stepchannel")
         elif source_key.startswith("ST_CH"):
             smartthings.send_command(self, source_key.replace("ST_CH", ""), "selectchannel")
-    
+
 
     def send_command(self, payload, command_type = "send_key", retry_count = 1, key_press_delay=None,bForceUpdate=True):
         """Send a key to the tv and handles exceptions."""
@@ -465,7 +466,26 @@ class SamsungTVDevice(MediaPlayerEntity):
                         #run_app(self, app_id, app_type='DEEP_LINK', meta_tag='')
                         self._ws.run_app(payload)
                     else:
-                        self._ws.send_key(payload, key_press_delay)
+                        hold_delay = 0
+                        source_keys = payload.split(",")
+                        key_code = source_keys[0]
+                        if len(source_keys) > 1:
+
+                            def get_hold_time():
+                                hold_time = source_keys[1].replace(" ", "")
+                                if not hold_time:
+                                    return 0
+                                if not hold_time.isdigit():
+                                    return 0
+                                hold_time = int(hold_time)/1000
+                                return min(hold_time, KEYHOLD_MAX_DELAY)
+
+                            hold_delay = get_hold_time()
+
+                        if hold_delay > 0:
+                            self._ws.hold_key(key_code, hold_delay)
+                        else:
+                            self._ws.send_key(payload, key_press_delay)
                     break
                 except (ConnectionResetError, AttributeError, BrokenPipeError) as ex:
                     self._ws.close()
