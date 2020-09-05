@@ -630,9 +630,9 @@ class SamsungTVDevice(MediaPlayerEntity):
         if self._power_off_in_progress():
             self._end_of_power_off = None 
             if self._is_ws_connection:
-                self.send_command("KEY_POWER")
+                self.hass.async_add_job(self.send_command, "KEY_POWER")
             else:
-                self.send_command("KEY_POWEROFF")
+                self.hass.async_add_job(self.send_command, "KEY_POWEROFF")
         elif self._state == STATE_OFF:
             if self._mac:
                 if self._broadcast:
@@ -647,7 +647,7 @@ class SamsungTVDevice(MediaPlayerEntity):
                 self.update(no_throttle=True)
                 self.schedule_update_ha_state(True)
             else:
-                self.send_command("KEY_POWERON")
+                self.hass.async_add_job(self.send_command, "KEY_POWERON")
         #Assume optomistic ON
         self._state = STATE_ON
 
@@ -657,11 +657,11 @@ class SamsungTVDevice(MediaPlayerEntity):
             self._end_of_power_off = dt_util.utcnow() + POWER_OFF_DELAY
             if self._is_ws_connection:
                 if self._is_frame_tv == False:
-                    self.send_command("KEY_POWER")
+                    self.hass.async_add_job(self.send_command, "KEY_POWER")
                 else:
-                    self.send_command("KEY_POWER,3000")
+                    self.hass.async_add_job(self.send_command, "KEY_POWER,3000")
             else:
-                self.send_command("KEY_POWEROFF")
+                self.hass.async_add_job(self.send_command, "KEY_POWEROFF")
             # Force closing of remote session to provide instant UI feedback
             try:
                 self._ws.close()
@@ -681,7 +681,7 @@ class SamsungTVDevice(MediaPlayerEntity):
         self._volume = self._volume + 0.1
         if self._volume>1:
             self._volume = 1
-        self.send_command("KEY_VOLUP")
+        self.hass.async_add_job(self.send_command, "KEY_VOLUP")
 
 
     def volume_down(self):
@@ -689,19 +689,19 @@ class SamsungTVDevice(MediaPlayerEntity):
         self._volume = self._volume - 0.1
         if self._volume<0:
             self._volume = 0
-        self.send_command("KEY_VOLDOWN")
+        self.hass.async_add_job(self.send_command, "KEY_VOLDOWN")
 
 
     def mute_volume(self, mute):
         """Send mute command."""
         self._muted = not self._muted
-        self.send_command("KEY_MUTE")
+        self.hass.async_add_job(self.send_command, "KEY_MUTE")
 
 
     def set_volume_level(self, volume):
         """Set volume level, range 0..1."""
         self._volume = volume
-        self._upnp.set_volume(int(volume*100))
+        self.hass.async_add_job(self._upnp.set_volume, int(volume*100))
 
 
     def media_play_pause(self):
@@ -715,29 +715,29 @@ class SamsungTVDevice(MediaPlayerEntity):
     def media_play(self):
         """Send play command."""
         self._playing = True
-        self.send_command("KEY_PLAY")
+        self.hass.async_add_job(self.send_command, "KEY_PLAY")
 
 
     def media_pause(self):
         """Send media pause command to media player."""
         self._playing = False
-        self.send_command("KEY_PAUSE")
+        self.hass.async_add_job(self.send_command, "KEY_PAUSE")
 
 
     def media_next_track(self):
         """Send next track command."""
         if self.source == "TV":
-            self.send_command("KEY_CHUP")
+            self.hass.async_add_job(self.send_command, "KEY_CHUP")
         else:
-            self.send_command("KEY_FF")
+            self.hass.async_add_job(self.send_command, "KEY_FF")
 
 
     def media_previous_track(self):
         """Send the previous track command."""
         if self.source == "TV":
-            self.send_command("KEY_CHDOWN")
+            self.hass.async_add_job(self.send_command, "KEY_CHDOWN")
         else:
-            self.send_command("KEY_REWIND")
+            self.hass.async_add_job(self.send_command, "KEY_REWIND")
 
 
     async def async_play_media(self, media_type, media_id, **kwargs):
