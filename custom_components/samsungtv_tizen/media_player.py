@@ -40,6 +40,7 @@ from homeassistant.components.media_player.const import (
     MEDIA_TYPE_APP,
     MEDIA_TYPE_URL,
 )
+
 from homeassistant.const import (
     CONF_BROADCAST_ADDRESS,
     CONF_HOST,
@@ -68,6 +69,7 @@ CONF_UPDATE_METHOD = "update_method"
 CONF_UPDATE_CUSTOM_PING_URL = "update_custom_ping_url"
 CONF_SOURCE_LIST = "source_list"
 CONF_APP_LIST = "app_list"
+CONF_CHANNEL_LIST = "channel_list"
 CONF_SCAN_APP_HTTP = "scan_app_http"
 
 KNOWN_DEVICES_KEY = "samsungtv_known_devices"
@@ -110,6 +112,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_UPDATE_CUSTOM_PING_URL): cv.string,
         vol.Optional(CONF_SOURCE_LIST, default=DEFAULT_SOURCE_LIST): cv.string,
         vol.Optional(CONF_APP_LIST): cv.string,
+        vol.Optional(CONF_CHANNEL_LIST): cv.string,
         vol.Optional(CONF_DEVICE_ID): cv.string,
         vol.Optional(CONF_API_KEY): cv.string,
         vol.Optional(CONF_SHOW_CHANNEL_NR, default=False): cv.boolean,
@@ -139,6 +142,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         update_custom_ping_url = config.get(CONF_UPDATE_CUSTOM_PING_URL)
         source_list = config.get(CONF_SOURCE_LIST)
         app_list = config.get(CONF_APP_LIST)
+        channel_list = config.get(CONF_CHANNEL_LIST)
         api_key = config.get(CONF_API_KEY)
         device_id = config.get(CONF_DEVICE_ID)
         show_channel_number = config.get(CONF_SHOW_CHANNEL_NR)
@@ -167,7 +171,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, channel_list, api_key, device_id, show_channel_number, broadcast, scan_app_http)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -176,7 +180,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerEntity):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, api_key, device_id, show_channel_number, broadcast, scan_app_http):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, channel_list, api_key, device_id, show_channel_number, broadcast, scan_app_http):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
@@ -194,6 +198,7 @@ class SamsungTVDevice(MediaPlayerEntity):
         
         self._source = None
         self._source_list = json.loads(source_list)
+        
         self._running_app = None
         if app_list is not None:
            self._auto_gen_installed_app_list = False
@@ -205,6 +210,12 @@ class SamsungTVDevice(MediaPlayerEntity):
            self._app_list = None
            self._app_list_ST = None
 
+        self._channel = None
+        if channel_list is not None:
+            self._channel_list = json.loads(channel_list)
+        else:
+            self._channel_list = None
+        
         self._uuid = uuid
         self._is_ws_connection = True if port in (8001, 8002) else False
         # Assume that the TV is not muted and volume is 0
@@ -403,7 +414,7 @@ class SamsungTVDevice(MediaPlayerEntity):
                 else:
                     if self._running_app == "TV/HDMI":
                         cloud_key = ""
-                        if self._cloud_source in ["digitalTv", "TV"]:
+                        if self._cloud_source in ["DigitalTv", "digitalTv", "TV"]:
                             cloud_key = "ST_TV"
                         else:
                             cloud_key = "ST_" + self._cloud_source
@@ -499,7 +510,7 @@ class SamsungTVDevice(MediaPlayerEntity):
                 self._state = STATE_OFF
                 return None
             elif self._running_app == "TV/HDMI":
-                if self._cloud_source in ["digitalTv", "TV"]:
+                if self._cloud_source in ["DigitalTv", "digitalTv", "TV"]:
                     if self._cloud_channel_name != "" and self._cloud_channel != "":
                         if self._show_channel_number:
                             return self._cloud_channel_name + " (" + self._cloud_channel + ")"
@@ -545,8 +556,17 @@ class SamsungTVDevice(MediaPlayerEntity):
         source_list.extend(list(self._source_list))
         if self._app_list is not None:
             source_list.extend(list(self._app_list))
+        if self._channel_list is not None:
+            source_list.extend(list(self._channel_list))
         return source_list
 
+    @property
+    def channel_list(self):
+        """List of available channels."""
+        if self._channel_list is None:
+            return None
+        else:
+            return list(self._channel_list)
 
     @property
     def volume_level(self):
@@ -565,12 +585,10 @@ class SamsungTVDevice(MediaPlayerEntity):
         """Flag media player features that are supported."""
         return SUPPORT_SAMSUNGTV | SUPPORT_TURN_ON
 
-
     @property
     def device_class(self):
         """Set the device class to TV."""
         return DEVICE_CLASS_TV
-
 
     def turn_on(self):
         """Turn the media player on."""
@@ -583,10 +601,13 @@ class SamsungTVDevice(MediaPlayerEntity):
         elif self._state == STATE_OFF:
             if self._mac:
                 if self._broadcast:
-                    wakeonlan.send_magic_packet(self._mac, ip_address=self._broadcast)
+                    for i in range(20):
+                        wakeonlan.send_magic_packet(self._mac, ip_address=self._broadcast)
+                        time.sleep(0.25)
                 else:
-                    wakeonlan.send_magic_packet(self._mac)
-                time.sleep(2)
+                    for i in range(20):
+                        wakeonlan.send_magic_packet(self._mac)
+                        time.sleep(0.25)
                 #Force Update as send command not called
                 self.update(no_throttle=True)
                 self.schedule_update_ha_state(True)
@@ -594,7 +615,6 @@ class SamsungTVDevice(MediaPlayerEntity):
                 self.send_command("KEY_POWERON")
         #Assume optomistic ON
         self._state = STATE_ON
-
 
     def turn_off(self):
         """Turn off media player."""
@@ -668,16 +688,23 @@ class SamsungTVDevice(MediaPlayerEntity):
 
     def media_next_track(self):
         """Send next track command."""
-        self.send_command("KEY_FF")
+        if self.source == "TV":
+            self.send_command("KEY_CHUP")
+        else:
+            self.send_command("KEY_FF")
 
 
     def media_previous_track(self):
         """Send the previous track command."""
-        self.send_command("KEY_REWIND")
+        if self.source == "TV":
+            self.send_command("KEY_CHDOWN")
+        else:
+            self.send_command("KEY_REWIND")
 
 
     async def async_play_media(self, media_type, media_id, **kwargs):
         """Support changing a channel."""
+        _LOGGER.debug("Trying to change %s to %s",media_type,media_id) 
         # Type channel
         if media_type == MEDIA_TYPE_CHANNEL:
             try:
@@ -685,9 +712,35 @@ class SamsungTVDevice(MediaPlayerEntity):
             except vol.Invalid:
                 _LOGGER.error("Media ID must be positive integer")
                 return
-            for digit in media_id:
-                await self.hass.async_add_job(self.send_command, "KEY_" + digit)
-            await self.hass.async_add_job(self.send_command, "KEY_ENTER")
+            if self._api_key and self._device_id:
+                if self._running_app == 'TV/HDMI' and self._cloud_source in ["DigitalTv", "digitalTv", "TV"]:
+                    #In TV mode, change channel
+                    if self._cloud_channel != media_id:
+                        await self.hass.async_add_job(self._smartthings_keys, f"ST_CH{media_id}")
+                else:
+                    #Change to TV source before changing channel
+                    await self.hass.async_add_job(self._smartthings_keys, "ST_TV")
+                    time.sleep(5)
+                    smartthings.device_update(self)
+                    if self._cloud_channel != media_id:
+                        await self.hass.async_add_job(self._smartthings_keys, f"ST_CH{media_id}")
+            else:
+                if self._running_app == 'TV/HDMI':
+                    for digit in media_id:
+                        await self.hass.async_add_job(self.send_command, "KEY_" + digit)
+                    await self.hass.async_add_job(self.send_command, "KEY_ENTER")
+                else:
+                    for source in self._source_list:
+                        if source.lower().find("tv") != -1:
+                            await self.hass.async_add_job(self.async_select_source, source)
+                    else:
+                        await self.hass.async_add_job(self.send_command, "KEY_SOURCE")
+                        time.sleep(0.5)
+                        await self.hass.async_add_job(self.send_command, "KEY_ENTER")
+                    time.sleep(5)
+                    for digit in media_id:
+                        await self.hass.async_add_job(self.send_command, "KEY_" + digit)
+                    await self.hass.async_add_job(self.send_command, "KEY_ENTER")
         # Launch an app
         elif media_type == MEDIA_TYPE_APP:
             await self.hass.async_add_job(self.send_command, media_id, "run_app")
@@ -735,7 +788,6 @@ class SamsungTVDevice(MediaPlayerEntity):
             _LOGGER.error("Unsupported media type")
             return
 
-
     async def async_select_source(self, source):
         """Select input source."""
         _LOGGER.debug('SamsungTV Trying source:%s',source)
@@ -758,6 +810,9 @@ class SamsungTVDevice(MediaPlayerEntity):
         elif source in self._app_list:
             source_key = self._app_list[ source ]
             await self.hass.async_add_job(self.send_command, source_key, "run_app")
+        elif source in self._channel_list:
+            source_key = self._channel_list[ source ]
+            await self.hass.async_add_job(self.async_play_media, MEDIA_TYPE_CHANNEL, source_key)
         else:
             _LOGGER.error("Unsupported source")
             return
