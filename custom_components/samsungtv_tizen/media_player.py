@@ -71,6 +71,7 @@ CONF_SOURCE_LIST = "source_list"
 CONF_APP_LIST = "app_list"
 CONF_CHANNEL_LIST = "channel_list"
 CONF_SCAN_APP_HTTP = "scan_app_http"
+CONF_IS_FRAME_TV = "is_frame_tv"
 
 KNOWN_DEVICES_KEY = "samsungtv_known_devices"
 MEDIA_TYPE_KEY = "send_key"
@@ -119,6 +120,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SHOW_CHANNEL_NR, default=False): cv.boolean,
         vol.Optional(CONF_BROADCAST_ADDRESS): cv.string,
         vol.Optional(CONF_SCAN_APP_HTTP, default=True): cv.boolean,
+        vol.Optional(CONF_IS_FRAME_TV, default=False): cv.boolean,
     }
 )
 
@@ -148,6 +150,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         device_id = config.get(CONF_DEVICE_ID)
         show_channel_number = config.get(CONF_SHOW_CHANNEL_NR)
         scan_app_http = config.get(CONF_SCAN_APP_HTTP)
+        is_frame_tv = config.get(CONF_IS_FRAME_TV)
     elif discovery_info is not None:
         tv_name = discovery_info.get("name")
         model = discovery_info.get("model_name")
@@ -172,7 +175,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ip_addr = socket.gethostbyname(host)
     if ip_addr not in known_devices:
         known_devices.add(ip_addr)
-        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, channel_list, api_key, device_id, show_channel_number, broadcast, scan_app_http)])
+        add_entities([SamsungTVDevice(host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, channel_list, api_key, device_id, show_channel_number, broadcast, scan_app_http, is_frame_tv)])
         _LOGGER.info("Samsung TV %s:%d added as '%s'", host, port, name)
     else:
         _LOGGER.info("Ignoring duplicate Samsung TV %s:%d", host, port)
@@ -181,7 +184,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SamsungTVDevice(MediaPlayerEntity):
     """Representation of a Samsung TV."""
 
-    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, channel_list, api_key, device_id, show_channel_number, broadcast, scan_app_http):
+    def __init__(self, host, port, name, timeout, mac, uuid, update_method, update_custom_ping_url, source_list, app_list, channel_list, api_key, device_id, show_channel_number, broadcast, scan_app_http, is_frame_tv):
         """Initialize the Samsung device."""
 
         # Save a reference to the imported classes
@@ -196,6 +199,7 @@ class SamsungTVDevice(MediaPlayerEntity):
         self._update_custom_ping_url = update_custom_ping_url
         self._broadcast = broadcast
         self._scan_app_http = scan_app_http
+        self._is_frame_tv = is_frame_tv
         
         self._source = None
         self._source_list = json.loads(source_list)
@@ -652,7 +656,10 @@ class SamsungTVDevice(MediaPlayerEntity):
         if (not self._power_off_in_progress()) and self._state != STATE_OFF:
             self._end_of_power_off = dt_util.utcnow() + POWER_OFF_DELAY
             if self._is_ws_connection:
-                self.send_command("KEY_POWER")
+                if self._is_frame_tv == False:
+                    self.send_command("KEY_POWER")
+                else:
+                    self.send_command("KEY_POWER,3000")
             else:
                 self.send_command("KEY_POWEROFF")
             # Force closing of remote session to provide instant UI feedback

@@ -91,6 +91,10 @@ Edit it by adding the following lines:
     This is a lengthy task that some may want to disable, you can do so by setting this option to `False`.<br/>
     For more information about how we get the running app, read the [app_list guide](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/App_list.md).<br/>
 
+    **is_frame_tv:**<br/>
+    (boolean)(Optional)<br/>
+    This option is `False` by default. The "Frame" model of Samsung TVs have an Art Mode feature, if this option is set to `True` the component will hold the power key for 3 seconds to turn off this TV model (instead of pressing normally which would go to Art Mode)<br/>
+
     **broadcast_address:**<br/>
     (string)(Optional)<br/>
     **Do not set this option if you do not know what it does, it can break turning your TV on.**<br/>
