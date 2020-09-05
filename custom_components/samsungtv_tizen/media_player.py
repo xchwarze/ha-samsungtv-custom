@@ -447,8 +447,19 @@ class SamsungTVDevice(MediaPlayerEntity):
         elif source_key == "ST_CHDOWN":
             smartthings.send_command(self, "down", "stepchannel")
         elif source_key.startswith("ST_CH"):
-            smartthings.send_command(self, source_key.replace("ST_CH", ""), "selectchannel")
-
+            ch_num = source_key.replace("ST_CH", "")
+            if ch_num.isdigit():
+                smartthings.send_command(self, ch_num, "selectchannel")
+        elif source_key == "ST_MUTE":
+            smartthings.send_command(self, "off" if self._muted else "on", "audiomute")
+        elif source_key == "ST_VOLUP":
+            smartthings.send_command(self, "up", "stepvolume")
+        elif source_key == "ST_VOLDOWN":
+            smartthings.send_command(self, "down", "stepvolume")
+        elif source_key.startswith("ST_VOL"):
+            vol_lev = source_key.replace("ST_VOL", "")
+            if vol_lev.isdigit():
+                smartthings.send_command(self, vol_lev, "setvolume")
 
     def send_command(self, payload, command_type = "send_key", retry_count = 1, key_press_delay=None,bForceUpdate=True):
         """Send a key to the tv and handles exceptions."""
