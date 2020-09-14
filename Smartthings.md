@@ -9,9 +9,15 @@ Step 1: Make sure your TV is logged into your smart things account.
 
 Step 2: Obtain an API key from https://account.smartthings.com/tokens
 
-Step 3: Go [here](https://graph-eu01-euwest1.api.smartthings.com/device/list) for your device id for each device. Click on the name of your TV and the device id will be in the URL:
+Step 3: 
+* For EU customers click [here](https://graph-eu01-euwest1.api.smartthings.com/device/list)
+* For US customers click [here](https://graph-na04-useast2.api.smartthings.com/device/list)
 
-https://graph-eu01-euwest1.api.smartthings.com/device/show/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX
+Click on the name of your TV and the device id will be shown on the URL, like so:
+```
+https://[...].api.smartthings.com/device/show/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX
+```
+where `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX` is the device id.
 
 Step 4: In your `configuration.yaml` add:
 
