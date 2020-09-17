@@ -585,8 +585,6 @@ class SamsungTVDevice(MediaPlayerEntity):
         """List of available input sources."""
         if self._app_list is None:
             self._gen_installed_app_list()
-        if self._power_off_in_progress() or self._state == STATE_OFF:
-            return None
         source_list = []
         source_list.extend(list(self._source_list))
         if self._app_list is not None:
