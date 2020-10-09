@@ -105,7 +105,7 @@ Edit it by adding the following lines:
 
     **channel_list:**<br/>
     (json)(Optional)<br/>
-    This contains the tv CHANNELS visible sources in the dropdown list in media player UI. Default format is '{"<CHANNELNAME>":"<CHANNELNUMBER>","<CHANNELNAME>":"<CHANNELNUMBER>}' for standard channels in TV mode via antenna/coaxial input. Those that use external devices/network based players (e.g. DLNA) can define URLs instead to define the different  channels they wish to have available. To guarantee performance keep the list small, recommended maximum 30 channels.<br/>
+    This contains the tv CHANNELS visible sources in the dropdown list in media player UI. Default format is '{"CHANNELNAME":"CHANNELNUMBER","CHANNELNAME":"CHANNELNUMBER"}' for standard channels in TV mode via antenna/coaxial input. Those that use external devices/network based players (e.g. DLNA) can define URLs instead to define the different  channels they wish to have available. To guarantee performance keep the list small, recommended maximum 30 channels.<br/>
     Example value: '{"MTV": "14", "Eurosport": "20", "TLC": "http://url/"}'<br/>
 
     **api_key:**<br/>
