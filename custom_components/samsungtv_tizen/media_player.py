@@ -798,7 +798,9 @@ class SamsungTVDevice(MediaPlayerEntity):
             await self.hass.async_add_job(self.send_command, source_key, "run_app")
         elif source in self._channel_list:
             source_key = self._channel_list[ source ]
-            await self.hass.async_add_job(self.async_play_media, MEDIA_TYPE_CHANNEL, source_key)
+            ch_media_type = MEDIA_TYPE_CHANNEL
+            if source_key.startswith("http"): ch_media_type = MEDIA_TYPE_URL
+            await self.hass.async_add_job(self.async_play_media,ch_media_type, source_key)
         else:
             _LOGGER.error("Unsupported source")
             return
