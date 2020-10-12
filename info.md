@@ -57,7 +57,6 @@ Edit it by adding the following lines:
     Resources: [key codes](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_codes.md) / [key patterns](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Key_chaining.md)
     **Warning: changing input source with voice commands only works if you set the device name in `source_list` as one of the whitelisted words that can be seen on [this page](https://web.archive.org/web/20181218120801/https://developers.google.com/actions/reference/smarthome/traits/modes#mode-settings) (under "Mode Settings")**
     
-
     **app_list:**<br/>
     (json)(Optional)<br/>
     This contains the APPS visible sources in the dropdown list in media player UI.<br/>
@@ -77,13 +76,6 @@ Edit it by adding the following lines:
     API Key for the SmartThings Cloud API, this is optional but adds better state handling on, off, channel name, hdmi source, and a few new keys: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc. (see more at [SmartThings Keys](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md#smartthings-keys))<br/>
     [How to get an API Key for SmartThings](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md)<br/>
     _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_<br/>
-
-    **api_key:**
-    (string)(Optional)
-    API Key for the SmartThings Cloud API, this is optional but adds better state handling on, off, channel name, hdmi source, and a few new keys: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc. (see more at [SmartThings Keys](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md#smartthings-keys))
-    [How to get an API Key for SmartThings](https://github.com/jaruba/ha-samsungtv-tizen/blob/master/Smartthings.md)
-    _You must set both an `api_key` and `device_id` to enable the SmartThings Cloud API_
-
     
     **device_id:**
     (string)(Optional)
