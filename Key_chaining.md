@@ -5,7 +5,7 @@
 
 **Note:** If SmartThings API was enabled by setting `api_key` and `device_id`, then these codes are also supported: `ST_TV`, `ST_HDMI1`, `ST_HDMI2`, `ST_HDMI3`, etc. which will change the input source faster then key chaining patterns will
 
-Key codes can be chained with the "+" symbol, delays can also be set in milliseconds between the "+" symbols, and if you wish to keep a key pressed you can set the desired time in milliseconds with the "," symbol.
+Key codes can be chained with the "+" symbol, delays can also be set in milliseconds between the "+" symbols (default delay is 500ms), and if you wish to keep a key pressed you can set the desired time in milliseconds with the "," symbol.
 
 This is a list of known and tested key chaining patterns. To see the complete list of known key codes, [check this list](./Key_codes.md)
 
