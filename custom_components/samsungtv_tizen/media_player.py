@@ -63,6 +63,7 @@ CONF_SHOW_CHANNEL_NR = "show_channel_number"
 DEFAULT_NAME = "Samsung TV Remote"
 DEFAULT_PORT = 8001
 DEFAULT_TIMEOUT = 3
+DEFAULT_KEY_CHAIN_DELAY = 0.5
 DEFAULT_UPDATE_METHOD = "ping"
 DEFAULT_SOURCE_LIST = '{"TV": "KEY_TV", "HDMI": "KEY_HDMI"}'
 CONF_UPDATE_METHOD = "update_method"
@@ -790,14 +791,19 @@ class SamsungTVDevice(MediaPlayerEntity):
             source_key = media_id
             if "+" in source_key:
                 all_source_keys = source_key.split("+")
+                last_was_delay = True
                 for this_key in all_source_keys:
                     if this_key.isdigit():
+                        last_was_delay = True
                         time.sleep(int(this_key)/1000)
                     else:
+                        if last_was_delay == False:
+                            time.sleep(DEFAULT_KEY_CHAIN_DELAY)
+                        last_was_delay = False
                         if this_key.startswith("ST_"):
-                            await self.hass.async_add_job(self._smartthings_keys, this_key)
+                            self.hass.async_add_job(self._smartthings_keys, this_key)
                         else:
-                            await self.hass.async_add_job(self.send_command, this_key)
+                            self.hass.async_add_job(self.send_command, this_key)
             elif source_key.startswith("ST_"):
                 await self.hass.async_add_job(self._smartthings_keys, source_key)
             else:
