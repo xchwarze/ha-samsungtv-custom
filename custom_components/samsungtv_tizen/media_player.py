@@ -756,28 +756,26 @@ class SamsungTVDevice(MediaPlayerEntity):
                         await self.hass.async_add_job(self._smartthings_keys, f"ST_CH{media_id}")
                 else:
                     #Change to TV source before changing channel
-                    await self.hass.async_add_job(self._smartthings_keys, "ST_TV")
+                    self.hass.async_add_job(self._smartthings_keys, "ST_TV")
                     time.sleep(5)
                     smartthings.device_update(self)
                     if self._cloud_channel != media_id:
                         await self.hass.async_add_job(self._smartthings_keys, f"ST_CH{media_id}")
             else:
+                keychain = ""
+                for digit in media_id:
+                    keychain += "KEY_{}+".format(digit)
+                keychain += "KEY_ENTER"
                 if self._running_app == 'TV/HDMI':
-                    for digit in media_id:
-                        await self.hass.async_add_job(self.send_command, "KEY_" + digit)
-                    await self.hass.async_add_job(self.send_command, "KEY_ENTER")
+                    self.async_play_media(MEDIA_TYPE_KEY, keychain)
                 else:
                     for source in self._source_list:
                         if source.lower().find("tv") != -1:
-                            await self.hass.async_add_job(self.async_select_source, source)
+                            self.hass.async_add_job(self.async_select_source, source)
                     else:
-                        await self.hass.async_add_job(self.send_command, "KEY_SOURCE")
-                        time.sleep(0.5)
-                        await self.hass.async_add_job(self.send_command, "KEY_ENTER")
+                        self.async_play_media(MEDIA_TYPE_KEY, "KEY_SOURCE+KEY_ENTER")
                     time.sleep(5)
-                    for digit in media_id:
-                        await self.hass.async_add_job(self.send_command, "KEY_" + digit)
-                    await self.hass.async_add_job(self.send_command, "KEY_ENTER")
+                    self.async_play_media(MEDIA_TYPE_KEY, keychain)
         # Launch an app
         elif media_type == MEDIA_TYPE_APP:
             await self.hass.async_add_job(self.send_command, media_id, "run_app")
