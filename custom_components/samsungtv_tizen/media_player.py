@@ -795,12 +795,12 @@ class SamsungTVDevice(MediaPlayerEntity):
                         last_was_delay = True
                         time.sleep(int(this_key)/1000)
                     else:
-                        if last_was_delay == False:
-                            time.sleep(DEFAULT_KEY_CHAIN_DELAY)
-                        last_was_delay = False
                         if this_key.startswith("ST_"):
-                            self.hass.async_add_job(self._smartthings_keys, this_key)
+                            await self.hass.async_add_job(self._smartthings_keys, this_key)
                         else:
+                            if last_was_delay == False:
+                                time.sleep(DEFAULT_KEY_CHAIN_DELAY)
+                            last_was_delay = False
                             self.hass.async_add_job(self.send_command, this_key)
             elif source_key.startswith("ST_"):
                 await self.hass.async_add_job(self._smartthings_keys, source_key)
