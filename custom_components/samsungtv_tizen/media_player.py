@@ -740,10 +740,10 @@ class SamsungTVDevice(MediaPlayerEntity):
 
 
     async def async_play_media(self, media_type, media_id, **kwargs):
-        """Support changing a channel."""
-        _LOGGER.debug("Trying to change %s to %s",media_type,media_id) 
         # Type channel
         if media_type == MEDIA_TYPE_CHANNEL:
+            """Support changing a channel."""
+            _LOGGER.debug("Trying to change %s to %s",media_type,media_id) 
             try:
                 cv.positive_int(media_id)
             except vol.Invalid:
@@ -767,15 +767,18 @@ class SamsungTVDevice(MediaPlayerEntity):
                     keychain += "KEY_{}+".format(digit)
                 keychain += "KEY_ENTER"
                 if self._running_app == 'TV/HDMI':
-                    self.async_play_media(MEDIA_TYPE_KEY, keychain)
+                    self.hass.async_add_job(self.async_play_media, MEDIA_TYPE_KEY, keychain)
                 else:
+                    found_source = False
                     for source in self._source_list:
-                        if source.lower().find("tv") != -1:
-                            self.hass.async_add_job(self.async_select_source, source)
-                    else:
-                        self.async_play_media(MEDIA_TYPE_KEY, "KEY_SOURCE+KEY_ENTER")
-                    time.sleep(5)
-                    self.async_play_media(MEDIA_TYPE_KEY, keychain)
+                        if source.lower() in ["tv", "live tv", "livetv"]:
+                            found_source = True
+                            await self.hass.async_add_job(self.async_select_source, source)
+                            time.sleep(2)
+                            break
+                    if found_source == False:
+                        keychain = "KEY_EXIT+KEY_EXIT+{}".format(keychain)
+                    self.hass.async_add_job(self.async_play_media, MEDIA_TYPE_KEY, keychain)
         # Launch an app
         elif media_type == MEDIA_TYPE_APP:
             await self.hass.async_add_job(self.send_command, media_id, "run_app")
