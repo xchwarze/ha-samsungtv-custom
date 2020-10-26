@@ -161,6 +161,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         show_channel_number = config.get(CONF_SHOW_CHANNEL_NR)
         scan_app_http = config.get(CONF_SCAN_APP_HTTP)
         is_frame_tv = config.get(CONF_IS_FRAME_TV)
+        show_logos = config.get(CONF_SHOW_LOGOS)
     elif discovery_info is not None:
         tv_name = discovery_info.get("name")
         model = discovery_info.get("model_name")
